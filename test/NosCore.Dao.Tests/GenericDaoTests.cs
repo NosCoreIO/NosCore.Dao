@@ -67,7 +67,9 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanInsertAndReplaceMultipleDtos()
         {
-            _dbContextBuilder.CreateContext().Set<SimpleEntity>().Add(new SimpleEntity { Key = 8, Value = "thisisatest" });
+            var otherContext = _dbContextBuilder.CreateContext();
+            await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "thisisatest" }).ConfigureAwait(false);
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var simpleDtos = new List<SimpleDto>
             {
@@ -100,13 +102,75 @@ namespace NosCore.Dao.Tests
             Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
         }
 
-        //auto increment check
+        [TestMethod]
+        public async Task AutoIncrementIsWorking()
+        {
+            var simpleDto = new SimpleDto { Key = 0, Value = "test" };
+            var result = await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.IsTrue(loadAll.Count == 1);
+            Assert.IsTrue(loadAll.First().Key == 1);
+            Assert.IsTrue(loadAll.First().Value == "test");
 
-        //can delete
+            Assert.IsTrue(result.Key == 1);
+            Assert.IsTrue(result.Value == "test");
+        }
 
-        //can not delete unexisting
+        [TestMethod]
+        public async Task CanDelete()
+        {
+            var otherContext = _dbContextBuilder.CreateContext();
+            await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-        //can delete multiple
+            var deleted = await _genericDao.TryDeleteAsync(8)!.ConfigureAwait(false);
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.IsTrue(loadAll.Count == 0);
+            Assert.IsTrue(deleted.Key == 8);
+            Assert.IsTrue(deleted.Value == "test");
+        }
+
+        [TestMethod]
+        public async Task DeleteOnNotFoundReturnNull()
+        {
+            var otherContext = _dbContextBuilder.CreateContext();
+            await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
+
+            var deleted = await _genericDao.TryDeleteAsync(9)!.ConfigureAwait(false);
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.IsTrue(loadAll.Count == 1);
+            Assert.IsNull(deleted);
+        }
+
+        [TestMethod]
+        public async Task DeleteWorksWithListOfKeys()
+        {
+            var otherContext = _dbContextBuilder.CreateContext();
+            await otherContext.Set<SimpleEntity>().AddRangeAsync(new SimpleEntity { Key = 8, Value = "test" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
+
+            var deleted = await _genericDao.TryDeleteAsync(new[] { 9, 8 })!.ConfigureAwait(false);
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.IsTrue(loadAll.Count == 0);
+            Assert.IsTrue(deleted.Count() == 2);
+        }
+
+        [TestMethod]
+        public async Task DeleteWorksWithListOfKeysButSomeMissingObjects()
+        {
+            var otherContext = _dbContextBuilder.CreateContext();
+            await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
+
+            var deleted = (await _genericDao.TryDeleteAsync(new[] { 9, 8 })!.ConfigureAwait(false)).ToList();
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.IsTrue(loadAll.Count == 0);
+            Assert.IsNotNull(deleted);
+            Assert.IsTrue(deleted.Count() == 1);
+            Assert.IsTrue(deleted.First().Key == 8);
+            Assert.IsTrue(deleted.First().Value == "test");
+        }
 
         [TestMethod]
         public async Task CanUseWhereClause()

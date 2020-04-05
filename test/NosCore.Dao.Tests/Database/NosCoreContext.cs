@@ -14,7 +14,9 @@ namespace NosCore.Dao.Tests.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+            modelBuilder.Entity<SimpleEntity>()
+                .Property(e => e.Key)
+                .ValueGeneratedOnAdd();
         }
     }
 }

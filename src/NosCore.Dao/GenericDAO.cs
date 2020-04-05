@@ -112,7 +112,7 @@ namespace NosCore.Dao
                 var dbset = context.Set<TEntity>();
                 var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
                 var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
-                var deletedDto = toDelete.Adapt<IEnumerable<TDto>>();
+                var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return deletedDto;
