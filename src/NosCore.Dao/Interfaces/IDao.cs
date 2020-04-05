@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace NosCore.Dao.Interfaces
 {
-    public interface IGenericDao<TDto, in TPk>
+    public interface IDao<TDto, in TPk>
     {
         Task<TDto> TryDeleteAsync(TPk dtokey);
 

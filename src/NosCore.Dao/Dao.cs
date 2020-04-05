@@ -19,14 +19,14 @@ using Serilog;
 
 namespace NosCore.Dao
 {
-    public class GenericDao<TEntity, TDto, TPk> : IGenericDao<TDto, TPk>
+    public class Dao<TEntity, TDto, TPk> : IDao<TDto, TPk>
     where TEntity : class
     {
         private readonly ILogger _logger;
         private readonly PropertyInfo[] _primaryKey;
         private readonly IDbContextBuilder _dbContextBuilder;
 
-        public GenericDao(ILogger logger, IDbContextBuilder dbContextBuilder)
+        public Dao(ILogger logger, IDbContextBuilder dbContextBuilder)
         {
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;

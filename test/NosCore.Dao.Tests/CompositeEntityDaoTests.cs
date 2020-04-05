@@ -16,24 +16,24 @@ using Serilog;
 namespace NosCore.Dao.Tests
 {
     [TestClass]
-    public class GenericDaoTestsForCompositeEntity
+    public class CompositeEntityDaoTests
     {
-        private GenericDao<CompositeEntity, CompositeDto, object[]> _genericDao = null!;
+        private Dao<CompositeEntity, CompositeDto, object[]> _dao = null!;
         private DbContextBuilder _dbContextBuilder = null!;
 
         [TestInitialize]
         public void Setup()
         {
             _dbContextBuilder = new DbContextBuilder();
-            _genericDao =
-                new GenericDao<CompositeEntity, CompositeDto, object[]>(new Mock<ILogger>().Object, _dbContextBuilder);
+            _dao =
+                new Dao<CompositeEntity, CompositeDto, object[]>(new Mock<ILogger>().Object, _dbContextBuilder);
         }
 
         [TestMethod]
         public async Task CanInsertDto()
         {
             var compositeDto = new CompositeDto { Key1 = 8, Key2 = 8, Value = "test" };
-            await _genericDao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key1 == 8);
@@ -46,7 +46,7 @@ namespace NosCore.Dao.Tests
         {
             _dbContextBuilder.CreateContext().Set<CompositeEntity>().Add(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" });
             var compositeDto = new CompositeDto { Key1 = 8, Key2 = 8, Value = "blabla" };
-            await _genericDao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key1 == 8);
@@ -63,7 +63,7 @@ namespace NosCore.Dao.Tests
                 new CompositeDto {Key1 = 9, Key2 = 9, Value = "test"}
             };
 
-            await _genericDao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().OrderBy(s => s.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key1 == 8);
@@ -87,7 +87,7 @@ namespace NosCore.Dao.Tests
                 new CompositeDto {Key1 = 9,Key2 = 9, Value = "test"}
             };
 
-            await _genericDao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().OrderBy(s => s.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key1 == 8);
@@ -106,7 +106,7 @@ namespace NosCore.Dao.Tests
                 .AddRangeAsync(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "thisisatest" }, new CompositeEntity { Key2 = 9, Key1 = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var loadAll = _genericDao.LoadAll().ToList();
+            var loadAll = _dao.LoadAll().ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key1 == 8);
             Assert.IsTrue(loadAll.First().Key2 == 8);
@@ -124,7 +124,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var id = new object[] { 8, 9 };
-            var deleted = await _genericDao.TryDeleteAsync(id).ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(id).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Key1 == 8);
@@ -139,7 +139,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeEntity>().AddAsync(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
             var id = new object[] { 9, 9 };
-            var deleted = await _genericDao.TryDeleteAsync(id).ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(id).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsNull(deleted);
@@ -152,7 +152,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeEntity>().AddRangeAsync(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" }, new CompositeEntity { Key1 = 9, Key2 = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
             var ids = new List<object[]> { new object[] { 9, 9 }, new object[] { 8, 8 } };
-            var deleted = await _genericDao.TryDeleteAsync(ids).ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(ids).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Count() == 2);
@@ -165,7 +165,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeEntity>().AddAsync(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
             var ids = new List<object[]> { new object[] { 9, 9 }, new object[] { 8, 8 } };
-            var deleted = (await _genericDao.TryDeleteAsync(ids).ConfigureAwait(false)).ToList();
+            var deleted = (await _dao.TryDeleteAsync(ids).ConfigureAwait(false)).ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsNotNull(deleted);
