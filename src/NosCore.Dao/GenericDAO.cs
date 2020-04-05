@@ -94,7 +94,6 @@ namespace NosCore.Dao
 
                 dbset.AddRange(entitytoadd);
 
-                context.ChangeTracker.AutoDetectChangesEnabled = true;
                 await context.SaveChangesAsync().ConfigureAwait(false);
 
                 return true;
