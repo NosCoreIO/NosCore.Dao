@@ -77,11 +77,10 @@ namespace NosCore.Dao
                 var ids = list.Select(s => s.Item2).ToArray();
                 var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
                 var entityfounds = dbset.FindAll(dbkey!, ids).ToList();
-                foreach (var dto in list)
+                foreach (var (entity, item2) in list)
                 {
-                    var entity = dto.Item1;
                     var entityfound =
-                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == dto.Item2);
+                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == item2);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
