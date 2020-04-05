@@ -5,9 +5,7 @@
 // 
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -35,7 +33,6 @@ namespace NosCore.Dao
             _primaryKey = key ?? throw new KeyNotFoundException();
         }
 
-        [return: MaybeNull]
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
         {
             try
@@ -78,11 +75,10 @@ namespace NosCore.Dao
                 var ids = list.Select(s => s.Item2).ToArray();
                 var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
                 var entityfounds = dbset.FindAll(dbkey!, ids).ToList();
-                foreach (var dto in list)
+                foreach (var (entity, item2) in list)
                 {
-                    var entity = dto.Item1;
                     var entityfound =
-                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == dto.Item2);
+                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == item2);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -94,7 +90,6 @@ namespace NosCore.Dao
 
                 dbset.AddRange(entitytoadd);
 
-                context.ChangeTracker.AutoDetectChangesEnabled = true;
                 await context.SaveChangesAsync().ConfigureAwait(false);
 
                 return true;
@@ -106,7 +101,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys)
         {
             try
@@ -115,7 +109,7 @@ namespace NosCore.Dao
                 var dbset = context.Set<TEntity>();
                 var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
                 var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
-                var deletedDto = toDelete.Adapt<IEnumerable<TDto>>();
+                var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return deletedDto;
@@ -127,7 +121,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
             try
@@ -153,7 +146,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
             if (predicate == null)
@@ -170,7 +162,7 @@ namespace NosCore.Dao
         public IEnumerable<TDto> LoadAll()
         {
             using var context = _dbContextBuilder.CreateContext();
-            return context.Set<TEntity>().Adapt<IEnumerable<TDto>>();
+            return context.Set<TEntity>().ToList().Adapt<IEnumerable<TDto>>();
         }
 
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
@@ -183,7 +175,7 @@ namespace NosCore.Dao
             using var context = _dbContextBuilder.CreateContext();
             var dbset = context.Set<TEntity>();
             var entities = dbset.Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.Adapt<IEnumerable<TDto>>();
+            return entities.Adapt<IEnumerable<TDto>>().ToList();
         }
     }
 }
