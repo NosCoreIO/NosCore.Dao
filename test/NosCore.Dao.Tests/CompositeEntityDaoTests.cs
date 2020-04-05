@@ -128,7 +128,7 @@ namespace NosCore.Dao.Tests
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Key1 == 8);
-            Assert.IsTrue(deleted.Key2 == 8);
+            Assert.IsTrue(deleted.Key2 == 9);
             Assert.IsTrue(deleted.Value == "test");
         }
 

@@ -142,13 +142,18 @@ namespace NosCore.Dao
 
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
+            if (dtokey == null)
+            {
+                return default!;
+            }
+
             try
             {
                 TDto deletedDto = default!;
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
-
-                var entityfound = await dbset.FindAsync(dtokey).ConfigureAwait(false);
+                object[] key = dtokey is object[] keyArray ? keyArray.ToArray() : new object[] { dtokey };
+                var entityfound = await dbset.FindAsync(key).ConfigureAwait(false);
 
                 if (entityfound != null)
                 {
