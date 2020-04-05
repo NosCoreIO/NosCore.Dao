@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ namespace NosCore.Dao
 {
     public class Dao<TEntity, TDto, TPk> : IDao<TDto, TPk>
     where TEntity : class
+    where TPk : struct
     {
         private readonly ILogger _logger;
         private readonly PropertyInfo[] _primaryKey;
@@ -65,39 +67,21 @@ namespace NosCore.Dao
 
         public async Task<bool> TryInsertOrUpdateAsync(IEnumerable<TDto> dtos)
         {
-            IEnumerable<Tuple<TEntity, TPk>> ConvertToTypedList(List<Tuple<TEntity, dynamic>> list)
-            {
-                foreach (var entity in list)
-                {
-                    if (!(entity.Item2 is object[] key))
-                    {
-                        throw new InvalidCastException();
-                    }
-                    if (key.Length > 1)
-                    {
-                        yield return new Tuple<TEntity, TPk>(entity.Item1, (TPk)entity.Item2);
-                    }
-                    else
-                    {
-                        yield return new Tuple<TEntity, TPk>(entity.Item1, (TPk)key.First());
-                    }
-                }
-            }
-
             try
             {
                 await using var context = _dbContextBuilder.CreateContext();
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var list = dtos.Select(dto => new Tuple<TEntity, dynamic>(dto!.Adapt<TEntity>(), _primaryKey.Select(composite => composite.GetValue(dto, null)!).ToArray())).ToList();
-                var typedList = ConvertToTypedList(list).ToList();
-                var ids = typedList.Select(s => s.Item2).ToArray();
-                var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
+                var list = dtos.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).ToList();
+
+                var ids = list.Select(s => s.Item2).ToArray();
+                var dbkey = typeof(TEntity).GetProperty(_primaryKey.First().Name);
                 var entityfounds = dbset.FindAll(dbkey!, ids).ToList();
-                foreach (var (entity, item2) in typedList)
+                foreach (var (entity, item2) in list)
                 {
-                    var entityfound = entityfounds.Find(s => (dynamic?)dbkey.First()?.GetValue(s, null) == item2);
+                    var entityfound =
+                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == item2);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -127,7 +111,7 @@ namespace NosCore.Dao
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
-                var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
+                var toDelete = dbset.FindAll(dbkey.First()!, dtokeys.ToArray());
                 var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
@@ -142,7 +126,7 @@ namespace NosCore.Dao
 
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
-            if (dtokey == null)
+            if (dtokey.ToString() == default)
             {
                 return default!;
             }
@@ -152,7 +136,11 @@ namespace NosCore.Dao
                 TDto deletedDto = default!;
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
-                object[] key = dtokey is object[] keyArray ? keyArray.ToArray() : new object[] { dtokey };
+                var key = dtokey is ITuple keyArray ? keyArray
+                    .GetType()
+                    .GetFields()
+                    .Select(property => property.GetValue(keyArray))
+                    .ToArray() : new object[] { dtokey };
                 var entityfound = await dbset.FindAsync(key).ConfigureAwait(false);
 
                 if (entityfound != null)
