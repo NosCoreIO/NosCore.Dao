@@ -35,7 +35,6 @@ namespace NosCore.Dao
             _primaryKey = key ?? throw new KeyNotFoundException();
         }
 
-        [return: MaybeNull]
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
         {
             try
@@ -105,7 +104,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys)
         {
             try
@@ -126,7 +124,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
             try
@@ -152,7 +149,6 @@ namespace NosCore.Dao
             }
         }
 
-        [return: MaybeNull]
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
             if (predicate == null)
@@ -169,7 +165,7 @@ namespace NosCore.Dao
         public IEnumerable<TDto> LoadAll()
         {
             using var context = _dbContextBuilder.CreateContext();
-            return context.Set<TEntity>().Adapt<IEnumerable<TDto>>();
+            return context.Set<TEntity>().ToList().Adapt<IEnumerable<TDto>>();
         }
 
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
@@ -182,7 +178,7 @@ namespace NosCore.Dao
             using var context = _dbContextBuilder.CreateContext();
             var dbset = context.Set<TEntity>();
             var entities = dbset.Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.Adapt<IEnumerable<TDto>>();
+            return entities.Adapt<IEnumerable<TDto>>().ToList();
         }
     }
 }
