@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Authors>NosCore - ChickenAPI</Authors>
+    <Authors>NosCore</Authors>
     <Copyright>2020</Copyright>
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/NosCoreIO/NosCore.Dao</PackageProjectUrl>
