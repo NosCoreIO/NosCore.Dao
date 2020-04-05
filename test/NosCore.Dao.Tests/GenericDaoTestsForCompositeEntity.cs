@@ -16,7 +16,7 @@ using Serilog;
 namespace NosCore.Dao.Tests
 {
     [TestClass]
-    public class GenericDaoTests
+    public class GenericDaoTestsForCompositeEntity
     {
         private GenericDao<CompositeEntity, CompositeDto, object[]> _genericDao = null!;
         private DbContextBuilder _dbContextBuilder = null!;
