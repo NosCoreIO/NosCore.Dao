@@ -42,7 +42,7 @@ namespace NosCore.Dao
                 var entity = dto!.Adapt<TEntity>();
                 var dbset = context.Set<TEntity>();
                 var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray<object>();
-                var entityfound = value.Length > 1 ? dbset.Find(value) : dbset.Find(value.First());
+                var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
                 if (entityfound != null)
                 {
                     context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -147,7 +147,8 @@ namespace NosCore.Dao
                 TDto deletedDto = default!;
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
-                var entityfound = dbset.Find(dtokey);
+
+                var entityfound = await dbset.FindAsync(dtokey).ConfigureAwait(false);
 
                 if (entityfound != null)
                 {
