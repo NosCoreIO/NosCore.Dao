@@ -9,7 +9,6 @@ using Moq;
 using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.TestsModels;
 using Serilog;
-using Serilog.Core;
 
 namespace NosCore.Dao.Tests
 {
@@ -30,11 +29,29 @@ namespace NosCore.Dao.Tests
         public async Task CanInsertDto()
         {
             var simpleDto = new SimpleDto() { Key = 8, Value = "test" };
-            var returnValue = await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
+            await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "test");
         }
+
+        //can replace
+
+        //can insert dtos
+
+        //auto increment check
+
+        //can delete
+
+        //can not delete unexisting
+
+        //can delete multiple
+
+        //where clause
+
+        //load all
+
+        //FirstOrDefaultAsync clause
     }
 }
