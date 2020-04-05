@@ -15,15 +15,28 @@ namespace NosCore.Dao.Extensions
 {
     public static class DbContextFindAllExtensions
     {
-        public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo keyProperty,
+        public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty,
             params TKey[] keyValues)
         where T : class
         {
             var list = keyValues.ToList();
             var parameter = Expression.Parameter(typeof(T), "e");
             var methodInfo = typeof(List<TKey>).GetMethod("Contains") ?? throw new InvalidOperationException();
-            var body = Expression.Call(Expression.Constant(list, typeof(List<TKey>)), methodInfo,
-                Expression.MakeMemberAccess(parameter, keyProperty));
+            Expression expressionToInject = Expression.Empty();
+            var i = 0;
+            foreach (var expression in keyProperty.Select(
+                composite => Expression.MakeMemberAccess(parameter, composite)))
+            {
+                if (i == 0)
+                {
+                    expressionToInject = expression;
+                }
+                else
+                {
+                    expressionToInject = Expression.AndAlso(expressionToInject, expression);
+                }
+            }
+            var body = Expression.Call(Expression.Constant(list, typeof(List<TKey>)), methodInfo, expressionToInject);
             var predicateExpression = Expression.Lambda<Func<T, bool>>(body, parameter);
             return dbSet.Where(predicateExpression);
         }

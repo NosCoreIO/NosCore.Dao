@@ -5,15 +5,18 @@
 // 
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Reflection;
 
 namespace NosCore.Dao.Extensions
 {
     public static class TypeExtensions
     {
-        public static PropertyInfo? FindKey(this Type typeDto)
+        public static PropertyInfo[]? FindKey(this Type typeDto)
         {
+            var key = new List<object>();
             var pis = typeDto.GetProperties();
             for (var index = 0; (index < pis.Length); index++)
             {
@@ -24,10 +27,10 @@ namespace NosCore.Dao.Extensions
                     continue;
                 }
 
-                return pi;
+                key.Add(pi);
             }
 
-            return null;
+            return key.Count > 0 ? key.Select(s=> (PropertyInfo)s).ToArray() : null;
         }
     }
 }
