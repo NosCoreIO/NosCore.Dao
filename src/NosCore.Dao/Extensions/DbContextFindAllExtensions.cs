@@ -5,6 +5,7 @@
 // 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -35,16 +36,19 @@ namespace NosCore.Dao.Extensions
             return dbSet.Where(predicateExpression);
         }
 
+        public static string WriteKeyQuery<TKey>(this TKey key)
+        {
+            return string.Join(" and ",
+                key is IEnumerable<object> enumerable
+                    ? enumerable.Select((t, i) => $"{{{i}}}={t}")
+                    : key!.GetType().GetFields().Select((t, i) => $"{{{i}}}={t.GetValue(key)}"));
+        }
+
         private static IQueryable<T> FindAllComposite<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty, List<TKey> list)
             where T : class
         {
-            string WriteKeyQuery(TKey key)
-            {
-                return string.Join(" and ", key!.GetType().GetFields().Select((t, i) => $"{{{i}}}={t.GetValue(key)}"));
-            }
-
-            var getValue = string.Join(" or ", list.Select(s => $"({WriteKeyQuery(s)})"));
-            var request = string.Format(getValue, keyProperty.Select(s=>s.Name).ToArray<object>());
+            var getValue = string.Join(" or ", list.Select(s => $"({s.WriteKeyQuery()})"));
+            var request = string.Format(getValue, keyProperty.Select(s => s.Name).ToArray<object>());
             return dbSet.Where(request);
         }
     }

@@ -5,6 +5,7 @@
 // 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -16,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using NosCore.Dao.Extensions;
 using NosCore.Dao.Interfaces;
 using Serilog;
+using System.Linq.Dynamic.Core;
 
 namespace NosCore.Dao
 {
@@ -33,7 +35,7 @@ namespace NosCore.Dao
             _dbContextBuilder = dbContextBuilder;
             using var context = _dbContextBuilder.CreateContext();
             var key = typeof(TDto).GetProperties()
-                .Where(s=> context.Model.FindEntityType(typeof(TEntity))
+                .Where(s => context.Model.FindEntityType(typeof(TEntity))
                     .FindPrimaryKey().Properties.Select(x => x.Name)
                     .Contains(s.Name)
                 ).ToArray();
@@ -47,7 +49,7 @@ namespace NosCore.Dao
                 await using var context = _dbContextBuilder.CreateContext();
                 var entity = dto!.Adapt<TEntity>();
                 var dbset = context.Set<TEntity>();
-                var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray<object>();
+                var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
                 if (entityfound != null)
                 {
@@ -77,15 +79,19 @@ namespace NosCore.Dao
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var list = dtos.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).ToList();
-
+                var enumerable = dtos.ToList();
+                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).Select(s => s.Item2).ToArray() : null;
+                var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
+                var list = enumerable.Select(dto => new Tuple<TEntity, IEnumerable>(dto!.Adapt<TEntity>(), _primaryKey.Select(part => part.GetValue(dto, null)))).ToList();
                 var ids = list.Select(s => s.Item2).ToArray();
-                var dbkey = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
-                var entityfounds = dbset.FindAll(dbkey, ids).ToList();
-                foreach (var (entity, item2) in list)
+                var entityfounds = _primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!);
+                var entityKey = typeof(TEntity).GetProperties()
+                    .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
+                foreach (var entity in list.Select(s => s.Item1))
                 {
-                    var entityfound =
-                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey.First()?.GetValue(s, null) == item2);
+                    var dbKeys = _primaryKey.Select(s => s.Name).ToArray<object>();
+                    var query = string.Format(entityKey.Select(part => part.GetValue(entity, null)).WriteKeyQuery(), dbKeys);
+                    var entityfound = entityfounds.FirstOrDefault(query);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
