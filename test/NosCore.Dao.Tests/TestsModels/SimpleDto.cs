@@ -4,8 +4,6 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
-using System.ComponentModel.DataAnnotations;
-
 namespace NosCore.Dao.Tests.TestsModels
 {
     public class SimpleDto

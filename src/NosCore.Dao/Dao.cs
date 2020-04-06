@@ -13,7 +13,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
 using NosCore.Dao.Extensions;
 using NosCore.Dao.Interfaces;
 using Serilog;
