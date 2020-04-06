@@ -32,8 +32,13 @@ namespace NosCore.Dao
         {
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            var key = typeof(TDto).FindKey();
-            _primaryKey = key ?? throw new KeyNotFoundException();
+            using var context = _dbContextBuilder.CreateContext();
+            var key = typeof(TDto).GetProperties()
+                .Where(s=> context.Model.FindEntityType(typeof(TEntity))
+                    .FindPrimaryKey().Properties.Select(x => x.Name)
+                    .Contains(s.Name)
+                ).ToArray();
+            _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }
 
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
@@ -76,12 +81,12 @@ namespace NosCore.Dao
                 var list = dtos.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).ToList();
 
                 var ids = list.Select(s => s.Item2).ToArray();
-                var dbkey = typeof(TEntity).GetProperty(_primaryKey.First().Name);
-                var entityfounds = dbset.FindAll(dbkey!, ids).ToList();
+                var dbkey = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
+                var entityfounds = dbset.FindAll(dbkey, ids).ToList();
                 foreach (var (entity, item2) in list)
                 {
                     var entityfound =
-                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == item2);
+                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey.First()?.GetValue(s, null) == item2);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -111,7 +116,7 @@ namespace NosCore.Dao
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
-                var toDelete = dbset.FindAll(dbkey.First()!, dtokeys.ToArray());
+                var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
                 var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);

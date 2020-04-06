@@ -11,10 +11,8 @@ namespace NosCore.Dao.Tests.TestsModels
 {
     public class CompositeDto
     {
-        [Key, Column(Order = 0)]
         public int Key1 { get; set; }
 
-        [Key, Column(Order = 1)]
         public int Key2 { get; set; }
 
         public string? Value { get; set; }
