@@ -5,12 +5,15 @@
 // 
 
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NosCore.Dao.Tests.TestsModels
 {
-    public class SimpleDto
+    public class CompositeDto
     {
-        public int Key { get; set; }
+        public int Key1 { get; set; }
+
+        public int Key2 { get; set; }
 
         public string? Value { get; set; }
     }

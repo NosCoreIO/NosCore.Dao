@@ -9,28 +9,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using NosCore.Dao.Extensions;
 using NosCore.Dao.Interfaces;
 using Serilog;
 
 namespace NosCore.Dao
 {
-    public class GenericDao<TEntity, TDto, TPk> : IGenericDao<TDto, TPk>
+    public class Dao<TEntity, TDto, TPk> : IDao<TDto, TPk>
     where TEntity : class
+    where TPk : struct
     {
         private readonly ILogger _logger;
-        private readonly PropertyInfo _primaryKey;
+        private readonly PropertyInfo[] _primaryKey;
         private readonly IDbContextBuilder _dbContextBuilder;
 
-        public GenericDao(ILogger logger, IDbContextBuilder dbContextBuilder)
+        public Dao(ILogger logger, IDbContextBuilder dbContextBuilder)
         {
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            var key = typeof(TDto).FindKey();
-            _primaryKey = key ?? throw new KeyNotFoundException();
+            using var context = _dbContextBuilder.CreateContext();
+            var key = typeof(TDto).GetProperties()
+                .Where(s=> context.Model.FindEntityType(typeof(TEntity))
+                    .FindPrimaryKey().Properties.Select(x => x.Name)
+                    .Contains(s.Name)
+                ).ToArray();
+            _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }
 
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
@@ -40,14 +48,14 @@ namespace NosCore.Dao
                 await using var context = _dbContextBuilder.CreateContext();
                 var entity = dto!.Adapt<TEntity>();
                 var dbset = context.Set<TEntity>();
-                var value = _primaryKey.GetValue(dto, null);
-                var entityfound = value is object[] objects ? dbset.Find(objects) : dbset.Find(value);
+                var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray<object>();
+                var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
                 if (entityfound != null)
                 {
                     context.Entry(entityfound).CurrentValues.SetValues(entity);
                 }
 
-                if ((value == null) || (entityfound == null))
+                if ((value.Any(val => val == null)) || (entityfound == null))
                 {
                     dbset.Add(entity);
                 }
@@ -70,15 +78,15 @@ namespace NosCore.Dao
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var list = dtos.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey!.GetValue(dto, null)!)).ToList();
+                var list = dtos.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).ToList();
 
                 var ids = list.Select(s => s.Item2).ToArray();
-                var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
-                var entityfounds = dbset.FindAll(dbkey!, ids).ToList();
+                var dbkey = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
+                var entityfounds = dbset.FindAll(dbkey, ids).ToList();
                 foreach (var (entity, item2) in list)
                 {
                     var entityfound =
-                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey?.GetValue(s, null) == item2);
+                        entityfounds.FirstOrDefault(s => (dynamic?)dbkey.First()?.GetValue(s, null) == item2);
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -107,8 +115,8 @@ namespace NosCore.Dao
             {
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
-                var dbkey = typeof(TEntity).GetProperty(_primaryKey!.Name);
-                var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
+                var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
+                var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
                 var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
@@ -123,12 +131,22 @@ namespace NosCore.Dao
 
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
+            if (dtokey.ToString() == default)
+            {
+                return default!;
+            }
+
             try
             {
                 TDto deletedDto = default!;
                 await using var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
-                var entityfound = dbset.Find(dtokey);
+                var key = dtokey is ITuple keyArray ? keyArray
+                    .GetType()
+                    .GetFields()
+                    .Select(property => property.GetValue(keyArray))
+                    .ToArray() : new object[] { dtokey };
+                var entityfound = await dbset.FindAsync(key).ConfigureAwait(false);
 
                 if (entityfound != null)
                 {

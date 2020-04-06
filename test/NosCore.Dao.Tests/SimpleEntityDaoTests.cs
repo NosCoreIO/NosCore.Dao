@@ -16,24 +16,24 @@ using Serilog;
 namespace NosCore.Dao.Tests
 {
     [TestClass]
-    public class GenericDaoTests
+    public class SimpleEntityDaoTests
     {
-        private GenericDao<SimpleEntity, SimpleDto, int> _genericDao = null!;
+        private Dao<SimpleEntity, SimpleDto, int> _dao = null!;
         private DbContextBuilder _dbContextBuilder = null!;
 
         [TestInitialize]
         public void Setup()
         {
             _dbContextBuilder = new DbContextBuilder();
-            _genericDao =
-                new GenericDao<SimpleEntity, SimpleDto, int>(new Mock<ILogger>().Object, _dbContextBuilder);
+            _dao =
+                new Dao<SimpleEntity, SimpleDto, int>(new Mock<ILogger>().Object, _dbContextBuilder);
         }
 
         [TestMethod]
         public async Task CanInsertDto()
         {
             var simpleDto = new SimpleDto { Key = 8, Value = "test" };
-            await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 8);
@@ -45,7 +45,7 @@ namespace NosCore.Dao.Tests
         {
             _dbContextBuilder.CreateContext().Set<SimpleEntity>().Add(new SimpleEntity { Key = 8, Value = "test" });
             var simpleDto = new SimpleDto { Key = 8, Value = "blabla" };
-            await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 8);
@@ -61,7 +61,7 @@ namespace NosCore.Dao.Tests
                 new SimpleDto {Key = 9, Value = "test"}
             };
 
-            await _genericDao.TryInsertOrUpdateAsync(simpleDtos)!.ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key == 8);
@@ -83,7 +83,7 @@ namespace NosCore.Dao.Tests
                 new SimpleDto {Key = 9, Value = "test"}
             };
 
-            await _genericDao.TryInsertOrUpdateAsync(simpleDtos)!.ConfigureAwait(false);
+            await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key == 8);
@@ -100,7 +100,7 @@ namespace NosCore.Dao.Tests
                 .AddRangeAsync(new SimpleEntity { Key = 8, Value = "thisisatest" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var loadAll = _genericDao.LoadAll().ToList();
+            var loadAll = _dao.LoadAll().ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "thisisatest");
@@ -112,7 +112,7 @@ namespace NosCore.Dao.Tests
         public async Task AutoIncrementIsWorking()
         {
             var simpleDto = new SimpleDto { Key = 0, Value = "test" };
-            var result = await _genericDao.TryInsertOrUpdateAsync(simpleDto)!.ConfigureAwait(false);
+            var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 1);
@@ -129,7 +129,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deleted = await _genericDao.TryDeleteAsync(8)!.ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Key == 8);
@@ -143,7 +143,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deleted = await _genericDao.TryDeleteAsync(9)!.ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsNull(deleted);
@@ -156,7 +156,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<SimpleEntity>().AddRangeAsync(new SimpleEntity { Key = 8, Value = "test" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deleted = await _genericDao.TryDeleteAsync(new[] { 9, 8 })!.ConfigureAwait(false);
+            var deleted = await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Count() == 2);
@@ -169,7 +169,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<SimpleEntity>().AddAsync(new SimpleEntity { Key = 8, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deleted = (await _genericDao.TryDeleteAsync(new[] { 9, 8 })!.ConfigureAwait(false)).ToList();
+            var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false)).ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsNotNull(deleted);
@@ -186,7 +186,7 @@ namespace NosCore.Dao.Tests
                 .AddRangeAsync(new SimpleEntity { Key = 8, Value = "thisisatest" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var loadAll = _genericDao.Where(s => s.Key == 9).ToList();
+            var loadAll = _dao.Where(s => s.Key == 9).ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 9);
             Assert.IsTrue(loadAll.First().Value == "test");
@@ -200,7 +200,7 @@ namespace NosCore.Dao.Tests
                 .AddRangeAsync(new SimpleEntity { Key = 8, Value = "thisisatest" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var dto = await _genericDao.FirstOrDefaultAsync(s => s.Key == 9).ConfigureAwait(false);
+            var dto = await _dao.FirstOrDefaultAsync(s => s.Key == 9).ConfigureAwait(false);
             Assert.IsNotNull(dto);
             Assert.IsTrue(dto.Key == 9);
             Assert.IsTrue(dto.Value == "test");
@@ -215,7 +215,7 @@ namespace NosCore.Dao.Tests
                 .AddRangeAsync(new SimpleEntity { Key = 8, Value = "thisisatest" }, new SimpleEntity { Key = 9, Value = "test" }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var dto = await _genericDao.FirstOrDefaultAsync(s => s.Key == 10).ConfigureAwait(false);
+            var dto = await _dao.FirstOrDefaultAsync(s => s.Key == 10).ConfigureAwait(false);
             Assert.IsNull(dto);
         }
     }
