@@ -4,9 +4,6 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace NosCore.Dao.Tests.TestsModels
 {
     public class CompositeDto
