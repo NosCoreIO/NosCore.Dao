@@ -84,14 +84,16 @@ namespace NosCore.Dao
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
                 var list = enumerable.Select(dto => new Tuple<TEntity, IEnumerable>(dto!.Adapt<TEntity>(), _primaryKey.Select(part => part.GetValue(dto, null)))).ToList();
                 var ids = list.Select(s => s.Item2).ToArray();
-                var entityfounds = _primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!);
                 var entityKey = typeof(TEntity).GetProperties()
                     .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
+                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!))
+                    .ToDictionary(s => string.Join(",", entityKey.Select(part => part.GetValue(s, null))), x => x);
+
                 foreach (var entity in list.Select(s => s.Item1))
                 {
                     var dbKeys = _primaryKey.Select(s => s.Name).ToArray<object>();
-                    var query = string.Format(entityKey.Select(part => part.GetValue(entity, null)).WriteKeyQuery(), dbKeys);
-                    var entityfound = entityfounds.FirstOrDefault(query);
+                    var key = string.Join(",", entityKey.Select(part => part.GetValue(entity, null)));
+                    var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key]  : null;
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
