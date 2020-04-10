@@ -21,14 +21,11 @@ namespace NosCore.Dao.Extensions
         public static ITuple GetTuple<T>(this IEnumerable<T> values)
         {
             var enumerable = values.ToArray();
-            var genericType = Type.GetType("System.Tuple`" + enumerable.Length);
+            var genericType = Type.GetType("System.Tuple`" + enumerable.Length) ?? throw new InvalidOperationException();
             var typeArgs = enumerable.Select(_ => typeof(T)).ToArray();
-            if (genericType != null)
-            {
-                var specificType = genericType.MakeGenericType(typeArgs);
-                var constructorArguments = enumerable.Cast<object>().ToArray();
-                return (ITuple)Activator.CreateInstance(specificType, constructorArguments);
-            }
+            var specificType = genericType.MakeGenericType(typeArgs);
+            var constructorArguments = enumerable.Cast<object>().ToArray();
+            return (ITuple)Activator.CreateInstance(specificType, constructorArguments);
         }
 
         public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty,
@@ -50,18 +47,17 @@ namespace NosCore.Dao.Extensions
             return dbSet.Where(predicateExpression);
         }
 
-        public static string WriteKeyQuery<TKey>(this TKey key)
-        {
-            return string.Join(" and ",
-                key is IEnumerable<object> enumerable
-                    ? enumerable.Select((t, i) => $"{{{i}}}={t}")
-                    : key!.GetType().GetFields().Select((t, i) => $"{{{i}}}={t.GetValue(key)}"));
-        }
-
         private static IQueryable<T> FindAllComposite<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty, List<TKey> list)
             where T : class
         {
-            var getValue = string.Join(" or ", list.Select(s => $"({s.WriteKeyQuery()})"));
+            string WriteKeyQuery(object? key)
+            {
+                return string.Join(" and ",
+                    key is IEnumerable<object> enumerable
+                        ? enumerable.Select((t, i) => $"{{{i}}}={t}")
+                        : key!.GetType().GetFields().Select((t, i) => $"{{{i}}}={t.GetValue(key)}"));
+            }
+            var getValue = string.Join(" or ", list.Select(s => $"({WriteKeyQuery(s)})"));
             var request = string.Format(getValue, keyProperty.Select(s => s.Name).ToArray<object>());
             return dbSet.Where(request);
         }
