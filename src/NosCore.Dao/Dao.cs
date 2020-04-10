@@ -86,12 +86,11 @@ namespace NosCore.Dao
                 var entityKey = typeof(TEntity).GetProperties()
                     .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
                 var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!))
-                    .ToDictionary(s => string.Join(",", entityKey.Select(part => part.GetValue(s, null))), x => x);
+                    .ToDictionary(s => entityKey.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
 
                 foreach (var entity in list.Select(s => s.Item1))
                 {
-                    var dbKeys = _primaryKey.Select(s => s.Name).ToArray<object>();
-                    var key = string.Join(",", entityKey.Select(part => part.GetValue(entity, null)));
+                    var key = entityKey.Select(part => part.GetValue(entity, null)).GetTuple();
                     var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key]  : null;
                     if (entityfound != null)
                     {
