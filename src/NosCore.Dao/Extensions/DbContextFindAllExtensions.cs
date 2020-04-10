@@ -12,11 +12,25 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
+using System.Runtime.CompilerServices;
 
 namespace NosCore.Dao.Extensions
 {
     public static class DbContextFindAllExtensions
     {
+        public static ITuple GetTuple<T>(this IEnumerable<T> values)
+        {
+            var enumerable = values.ToArray();
+            var genericType = Type.GetType("System.Tuple`" + enumerable.Length);
+            var typeArgs = enumerable.Select(_ => typeof(T)).ToArray();
+            if (genericType != null)
+            {
+                var specificType = genericType.MakeGenericType(typeArgs);
+                var constructorArguments = enumerable.Cast<object>().ToArray();
+                return (ITuple)Activator.CreateInstance(specificType, constructorArguments);
+            }
+        }
+
         public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty,
             params TKey[] keyValues)
         where T : class
