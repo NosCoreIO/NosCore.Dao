@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore;
 using NosCore.Dao.Extensions;
 using NosCore.Dao.Interfaces;
 using Serilog;
-using System.Linq.Dynamic.Core;
 
 namespace NosCore.Dao
 {
