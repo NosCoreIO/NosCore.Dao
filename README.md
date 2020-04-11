@@ -21,3 +21,12 @@ We are not responsible of any damages caused by bad usage of our source. Please 
 We recommend usage of : 
 * [Roslynator extension](https://github.com/JosefPihrt/Roslynator).
 * [Resharper](https://www.jetbrains.com/resharper/)
+
+### Simple example
+new Dao<SimpleEntity, SimpleDto, int>(_logger, _dbContextBuilder);
+
+### Composite Key example
+new Dao<CompositeEntity, CompositeDto, (int, int)>(_logger, _dbContextBuilder);
+
+### TPH example
+new Dao<TphBaseEntity, ITphBaseDto, int>(_logger, _dbContextBuilder);
