@@ -27,24 +27,27 @@ namespace NosCore.Dao
         private readonly ILogger _logger;
         private readonly PropertyInfo[] _primaryKey;
         private readonly IDbContextBuilder _dbContextBuilder;
-        private readonly Dictionary<Type, Type> _tphMappingDictionary;
+        private readonly Dictionary<Type, Type> _tphDtoToEntityDictionary;
+        private readonly Dictionary<Type, Type> _tphEntityToDtoDictionary;
         public Dao(ILogger logger, IDbContextBuilder dbContextBuilder)
         {
             if (typeof(TDto).IsInterface)
             {
                 var entities = InterfaceHelper.GetAllTypesOf<TEntity>().ToList();
                 var dtos = InterfaceHelper.GetAllTypesOf<TDto>().ToList();
-                _tphMappingDictionary = new Dictionary<Type, Type>();
+                _tphDtoToEntityDictionary = new Dictionary<Type, Type>();
                 foreach (var entity in entities)
                 {
                     var dto = dtos.First(s => s.Name.TrimEnd("Dto") == entity.Name.TrimEnd("Entity"));
-                    _tphMappingDictionary.Add(entity, dto);
+                    _tphDtoToEntityDictionary.Add(entity, dto);
                 }
             }
             else
             {
-                _tphMappingDictionary = new Dictionary<Type, Type> {{typeof(TEntity), typeof(TDto)}};
+                _tphDtoToEntityDictionary = new Dictionary<Type, Type> {{typeof(TEntity), typeof(TDto)}};
             }
+
+            _tphEntityToDtoDictionary = _tphDtoToEntityDictionary.ToDictionary(s => s.Value, s => s.Key);
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
             using var context = _dbContextBuilder.CreateContext();
@@ -61,7 +64,7 @@ namespace NosCore.Dao
             try
             {
                 var dtoType = dto!.GetType();
-                var entityType = _tphMappingDictionary.First(s => s.Value == dtoType).Key;
+                var entityType = _tphEntityToDtoDictionary[dtoType];
 
                 await using var context = _dbContextBuilder.CreateContext();
                 var entity = dto!.Adapt(dtoType, entityType);
@@ -101,7 +104,7 @@ namespace NosCore.Dao
                 var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto =>
                 {
                     var dtoType = dto!.GetType();
-                    var entityType = _tphMappingDictionary.First(s => s.Value == dtoType).Key;
+                    var entityType = _tphEntityToDtoDictionary[dtoType];
                     return new Tuple<TEntity, TPk>((TEntity) dto!.Adapt(dtoType, entityType)!,
                             (TPk) _primaryKey.First().GetValue(dto, null)!);
                 }).Select(s => s.Item2).ToArray() : null;
@@ -109,7 +112,7 @@ namespace NosCore.Dao
                 var list = enumerable.Select(dto =>
                 {
                     var dtoType = dto!.GetType();
-                    var entityType = _tphMappingDictionary.First(s => s.Value == dtoType).Key;
+                    var entityType = _tphEntityToDtoDictionary[dtoType];
                     return new Tuple<TEntity, IEnumerable>((TEntity) dto!.Adapt(dtoType, entityType)!,
                             _primaryKey.Select(part => part.GetValue(dto, null)));
                 }).ToList();
