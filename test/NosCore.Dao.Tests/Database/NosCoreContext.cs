@@ -2,14 +2,12 @@
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
-// 
 
 using Microsoft.EntityFrameworkCore;
-using NosCore.Dao.Tests.Database.Entities;
+using NosCore.Dao.Tests.Database.Entities.CompositeEntities;
 using NosCore.Dao.Tests.Database.Entities.CompositeTphEntities;
 using NosCore.Dao.Tests.Database.Entities.SimpleEntities;
 using NosCore.Dao.Tests.Database.Entities.TphEntities;
-using NosCore.Dao.Tests.TestsModels;
 
 namespace NosCore.Dao.Tests.Database
 {
@@ -38,6 +36,15 @@ namespace NosCore.Dao.Tests.Database
                 .HasDiscriminator<string>("Discriminator")
                 .HasValue<Tph1Entity>("Tph1Entity")
                 .HasValue<Tph2Entity>("Tph2Entity");
+
+            modelBuilder.Entity<CompositeTphBaseEntity>()
+                .HasKey(e => new {e.Key1, e.Key2});
+
+            modelBuilder.Entity<CompositeTphBaseEntity>()
+                .HasDiscriminator<string>("Discriminator")
+                .HasValue<CompositeTph1Entity>("CompositeTph1Entity")
+                .HasValue<CompositeTph2Entity>("CompositeTph2Entity");
+
         }
     }
 }

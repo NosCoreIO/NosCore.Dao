@@ -3,14 +3,13 @@
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 
-using System.ComponentModel.DataAnnotations;
-
-namespace NosCore.Dao.Tests.Database.Entities.TphEntities
+namespace NosCore.Dao.Tests.TestsModels.CompositeTphModels
 {
-    public class TphBaseEntity
+    public class CompositeTphBaseDto : ICompositeTphDto
     {
-        [Key]
-        public int Key { get; set; }
+        public int Key1 { get; set; }
+
+        public int Key2 { get; set; }
 
         public string? Value { get; set; }
     }

@@ -3,14 +3,14 @@
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 
-namespace NosCore.Dao.Tests.TestsModels.CompositeModels
+namespace NosCore.Dao.Tests.TestsModels.CompositeTphModels
 {
-    public class CompositeDto
+    public interface ICompositeTphDto
     {
         public int Key1 { get; set; }
 
         public int Key2 { get; set; }
 
-        public string? Value { get; set; }
+        string? Value { get; set; }
     }
 }

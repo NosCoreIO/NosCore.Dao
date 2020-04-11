@@ -18,9 +18,4 @@
     <ProjectReference Include="..\..\src\NosCore.Dao\NosCore.Dao.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Database\Entities\CompositeEntities\" />
-    <Folder Include="TestsModels\CompositeTphModels\" />
-  </ItemGroup>
-
 </Project>

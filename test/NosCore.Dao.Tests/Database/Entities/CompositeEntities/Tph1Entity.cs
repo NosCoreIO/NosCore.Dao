@@ -3,9 +3,9 @@
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 
-namespace NosCore.Dao.Tests.TestsModels.TphModels
+namespace NosCore.Dao.Tests.Database.Entities.CompositeEntities
 {
-    public class Tph1Dto : TphBaseDto
+    public class CompositeTph1Entity : CompositeTphBaseEntity
     {
         public int SpecificPropertyTph1 { get; set; }
     }
