@@ -7,6 +7,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -27,27 +28,28 @@ namespace NosCore.Dao
         private readonly ILogger _logger;
         private readonly PropertyInfo[] _primaryKey;
         private readonly IDbContextBuilder _dbContextBuilder;
-        private readonly Dictionary<Type, Type> _tphEntityToDtoDictionary;
-        private readonly Dictionary<Type, Type> _tphDtoToEntityDictionary;
+        private readonly ReadOnlyDictionary<Type, Type> _tphEntityToDtoDictionary;
+        private readonly ReadOnlyDictionary<Type, Type> _tphDtoToEntityDictionary;
         public Dao(ILogger logger, IDbContextBuilder dbContextBuilder)
         {
             if (typeof(TDto).IsInterface)
             {
                 var entities = InterfaceHelper.GetAllTypesOf<TEntity>().ToList();
                 var dtos = InterfaceHelper.GetAllTypesOf<TDto>().ToList();
-                _tphEntityToDtoDictionary = new Dictionary<Type, Type>();
+                var tphEntityToDtoDictionary = new Dictionary<Type, Type>();
                 foreach (var entity in entities)
                 {
                     var dto = dtos.First(s => s.Name.TrimEnd("Dto") == entity.Name.TrimEnd("Entity"));
-                    _tphEntityToDtoDictionary.Add(entity, dto);
+                    tphEntityToDtoDictionary.Add(entity, dto);
                 }
+                _tphEntityToDtoDictionary = new ReadOnlyDictionary<Type, Type>(tphEntityToDtoDictionary);
             }
             else
             {
-                _tphEntityToDtoDictionary = new Dictionary<Type, Type> { { typeof(TEntity), typeof(TDto) } };
+                _tphEntityToDtoDictionary = new ReadOnlyDictionary<Type, Type>(new Dictionary<Type, Type> { { typeof(TEntity), typeof(TDto) } });
             }
 
-            _tphDtoToEntityDictionary = _tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key);
+            _tphDtoToEntityDictionary = new ReadOnlyDictionary<Type, Type>(_tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key));
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
             using var context = _dbContextBuilder.CreateContext();
@@ -101,30 +103,23 @@ namespace NosCore.Dao
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto =>
-                {
-                    var dtoType = dto!.GetType();
-                    var entityType = _tphDtoToEntityDictionary[dtoType];
-                    return new Tuple<TEntity, TPk>((TEntity)dto!.Adapt(dtoType, entityType)!,
-                            (TPk)_primaryKey.First().GetValue(dto, null)!);
-                }).Select(s => s.Item2).ToArray() : null;
+
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
                 var list = enumerable.Select(dto =>
                 {
                     var dtoType = dto!.GetType();
                     var entityType = _tphDtoToEntityDictionary[dtoType];
-                    return new Tuple<TEntity, IEnumerable>((TEntity)dto!.Adapt(dtoType, entityType)!,
-                            _primaryKey.Select(part => part.GetValue(dto, null)));
-                }).ToList();
-                var ids = list.Select(s => s.Item2).ToArray();
-                var entityKey = typeof(TEntity).GetProperties()
-                    .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
-                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!))
-                    .ToDictionary(s => entityKey.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
+                    return (TEntity) dto!.Adapt(dtoType, entityType)!;
+                });
 
-                foreach (var entity in list.Select(s => s.Item1))
+                var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
+                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => (TPk)_primaryKey.First().GetValue(dto, null)!).ToArray() : null;
+                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2, ids!) : dbset.FindAll(dbkey2, ids2!))
+                    .ToDictionary(s => dbkey2.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
+
+                foreach (var entity in list)
                 {
-                    var key = entityKey.Select(part => part.GetValue(entity, null)).GetTuple();
+                    var key = dbkey2.Select(part => part.GetValue(entity, null)).GetTuple();
                     var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
                     if (entityfound != null)
                     {
@@ -255,7 +250,7 @@ namespace NosCore.Dao
             {
                 var entityType = entity.GetType();
                 var dtoType = _tphEntityToDtoDictionary[entityType];
-                return (TDto) entity.Adapt(entityType, dtoType)!;
+                return (TDto)entity.Adapt(entityType, dtoType)!;
             });
         }
     }
