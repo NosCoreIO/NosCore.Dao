@@ -4,12 +4,12 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // -----------------------------------
 
-using Microsoft.EntityFrameworkCore;
-
-namespace NosCore.Dao.Interfaces
+namespace NosCore.Dao.Tests.TestsModels.TphModels
 {
-    public interface IDbContextBuilder
+    public interface ITphDto
     {
-        DbContext CreateContext();
+        int Key { get; set; }
+
+        string? Value { get; set; }
     }
 }

@@ -4,12 +4,14 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // -----------------------------------
 
-using Microsoft.EntityFrameworkCore;
-
-namespace NosCore.Dao.Interfaces
+namespace NosCore.Dao.Tests.TestsModels.CompositeModels
 {
-    public interface IDbContextBuilder
+    public class CompositeDto
     {
-        DbContext CreateContext();
+        public int Key1 { get; set; }
+
+        public int Key2 { get; set; }
+
+        public string? Value { get; set; }
     }
 }

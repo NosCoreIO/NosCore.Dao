@@ -2,7 +2,7 @@
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
-// 
+// -----------------------------------
 
 using System;
 using System.Collections;
@@ -27,9 +27,27 @@ namespace NosCore.Dao
         private readonly ILogger _logger;
         private readonly PropertyInfo[] _primaryKey;
         private readonly IDbContextBuilder _dbContextBuilder;
-
+        private readonly Dictionary<Type, Type> _tphEntityToDtoDictionary;
+        private readonly Dictionary<Type, Type> _tphDtoToEntityDictionary;
         public Dao(ILogger logger, IDbContextBuilder dbContextBuilder)
         {
+            if (typeof(TDto).IsInterface)
+            {
+                var entities = InterfaceHelper.GetAllTypesOf<TEntity>().ToList();
+                var dtos = InterfaceHelper.GetAllTypesOf<TDto>().ToList();
+                _tphEntityToDtoDictionary = new Dictionary<Type, Type>();
+                foreach (var entity in entities)
+                {
+                    var dto = dtos.First(s => s.Name.TrimEnd("Dto") == entity.Name.TrimEnd("Entity"));
+                    _tphEntityToDtoDictionary.Add(entity, dto);
+                }
+            }
+            else
+            {
+                _tphEntityToDtoDictionary = new Dictionary<Type, Type> { { typeof(TEntity), typeof(TDto) } };
+            }
+
+            _tphDtoToEntityDictionary = _tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key);
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
             using var context = _dbContextBuilder.CreateContext();
@@ -45,8 +63,11 @@ namespace NosCore.Dao
         {
             try
             {
+                var dtoType = dto!.GetType();
+                var entityType = _tphDtoToEntityDictionary[dtoType];
+
                 await using var context = _dbContextBuilder.CreateContext();
-                var entity = dto!.Adapt<TEntity>();
+                var entity = dto!.Adapt(dtoType, entityType);
                 var dbset = context.Set<TEntity>();
                 var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
@@ -57,11 +78,11 @@ namespace NosCore.Dao
 
                 if ((value.Any(val => val == null)) || (entityfound == null))
                 {
-                    dbset.Add(entity);
+                    dbset.Add(entity as TEntity ?? throw new InvalidOperationException());
                 }
 
                 await context.SaveChangesAsync().ConfigureAwait(false);
-                return entity.Adapt<TDto>();
+                return (TDto)entity!.Adapt(entityType, dtoType)!;
             }
             catch (Exception e)
             {
@@ -74,14 +95,27 @@ namespace NosCore.Dao
         {
             try
             {
+
+                var enumerable = dtos.ToList();
                 await using var context = _dbContextBuilder.CreateContext();
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var enumerable = dtos.ToList();
-                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => new Tuple<TEntity, TPk>(dto!.Adapt<TEntity>(), (TPk)_primaryKey.First().GetValue(dto, null)!)).Select(s => s.Item2).ToArray() : null;
+                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto =>
+                {
+                    var dtoType = dto!.GetType();
+                    var entityType = _tphDtoToEntityDictionary[dtoType];
+                    return new Tuple<TEntity, TPk>((TEntity)dto!.Adapt(dtoType, entityType)!,
+                            (TPk)_primaryKey.First().GetValue(dto, null)!);
+                }).Select(s => s.Item2).ToArray() : null;
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
-                var list = enumerable.Select(dto => new Tuple<TEntity, IEnumerable>(dto!.Adapt<TEntity>(), _primaryKey.Select(part => part.GetValue(dto, null)))).ToList();
+                var list = enumerable.Select(dto =>
+                {
+                    var dtoType = dto!.GetType();
+                    var entityType = _tphDtoToEntityDictionary[dtoType];
+                    return new Tuple<TEntity, IEnumerable>((TEntity)dto!.Adapt(dtoType, entityType)!,
+                            _primaryKey.Select(part => part.GetValue(dto, null)));
+                }).ToList();
                 var ids = list.Select(s => s.Item2).ToArray();
                 var entityKey = typeof(TEntity).GetProperties()
                     .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
@@ -91,7 +125,7 @@ namespace NosCore.Dao
                 foreach (var entity in list.Select(s => s.Item1))
                 {
                     var key = entityKey.Select(part => part.GetValue(entity, null)).GetTuple();
-                    var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key]  : null;
+                    var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
                     if (entityfound != null)
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
@@ -122,7 +156,12 @@ namespace NosCore.Dao
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
-                var deletedDto = toDelete.Adapt<IEnumerable<TDto>>().ToList();
+                var deletedDto = toDelete.ToList().Select(entity =>
+                {
+                    var entityType = entity.GetType();
+                    var dtoType = _tphEntityToDtoDictionary[entityType];
+                    return (TDto)entity.Adapt(entityType, dtoType)!;
+                });
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return deletedDto;
@@ -155,7 +194,9 @@ namespace NosCore.Dao
 
                 if (entityfound != null)
                 {
-                    deletedDto = entityfound.Adapt<TDto>();
+                    var entityType = entityfound.GetType();
+                    var dtoType = _tphEntityToDtoDictionary[entityType];
+                    deletedDto = (TDto)entityfound.Adapt(entityType, dtoType)!;
                     dbset.Remove(entityfound);
                 }
 
@@ -179,13 +220,25 @@ namespace NosCore.Dao
             await using var context = _dbContextBuilder.CreateContext();
             var dbset = context.Set<TEntity>();
             var ent = await dbset.FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
-            return ent.Adapt<TDto>();
+            if (ent == null)
+            {
+                return default!;
+            }
+            var entityType = ent.GetType();
+            var dtoType = _tphEntityToDtoDictionary[entityType];
+
+            return (TDto)ent.Adapt(entityType, dtoType)!;
         }
 
         public IEnumerable<TDto> LoadAll()
         {
             using var context = _dbContextBuilder.CreateContext();
-            return context.Set<TEntity>().ToList().Adapt<IEnumerable<TDto>>();
+            return context.Set<TEntity>().ToList().Select(entity =>
+            {
+                var entityType = entity.GetType();
+                var dtoType = _tphEntityToDtoDictionary[entityType];
+                return (TDto)entity.Adapt(entityType, dtoType)!;
+            });
         }
 
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
@@ -198,7 +251,12 @@ namespace NosCore.Dao
             using var context = _dbContextBuilder.CreateContext();
             var dbset = context.Set<TEntity>();
             var entities = dbset.Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.Adapt<IEnumerable<TDto>>().ToList();
+            return entities.ToList().Select(entity =>
+            {
+                var entityType = entity.GetType();
+                var dtoType = _tphEntityToDtoDictionary[entityType];
+                return (TDto) entity.Adapt(entityType, dtoType)!;
+            });
         }
     }
 }

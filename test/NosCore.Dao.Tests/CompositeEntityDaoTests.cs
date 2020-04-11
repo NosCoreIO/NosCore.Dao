@@ -2,7 +2,7 @@
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
-// 
+// -----------------------------------
 
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NosCore.Dao.Tests.Database;
-using NosCore.Dao.Tests.TestsModels;
+using NosCore.Dao.Tests.Database.Entities.CompositeTphEntities;
+using NosCore.Dao.Tests.TestsModels.CompositeModels;
 using Serilog;
 
 namespace NosCore.Dao.Tests

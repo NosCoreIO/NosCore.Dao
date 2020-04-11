@@ -2,15 +2,13 @@
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
-// 
+// -----------------------------------
 
-namespace NosCore.Dao.Tests.TestsModels
+namespace NosCore.Dao.Tests.TestsModels.SimpleModels
 {
-    public class CompositeDto
+    public class SimpleDto
     {
-        public int Key1 { get; set; }
-
-        public int Key2 { get; set; }
+        public int Key { get; set; }
 
         public string? Value { get; set; }
     }

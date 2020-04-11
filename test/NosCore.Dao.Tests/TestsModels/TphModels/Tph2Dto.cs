@@ -4,12 +4,10 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // -----------------------------------
 
-using Microsoft.EntityFrameworkCore;
-
-namespace NosCore.Dao.Interfaces
+namespace NosCore.Dao.Tests.TestsModels.TphModels
 {
-    public interface IDbContextBuilder
+    public class Tph2Dto : TphBaseDto
     {
-        DbContext CreateContext();
+        public int SpecificPropertyTph2 { get; set; }
     }
 }
