@@ -103,30 +103,23 @@ namespace NosCore.Dao
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
-                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto =>
-                {
-                    var dtoType = dto!.GetType();
-                    var entityType = _tphDtoToEntityDictionary[dtoType];
-                    return new Tuple<TEntity, TPk>((TEntity)dto!.Adapt(dtoType, entityType)!,
-                            (TPk)_primaryKey.First().GetValue(dto, null)!);
-                }).Select(s => s.Item2).ToArray() : null;
+
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
                 var list = enumerable.Select(dto =>
                 {
                     var dtoType = dto!.GetType();
                     var entityType = _tphDtoToEntityDictionary[dtoType];
-                    return new Tuple<TEntity, IEnumerable>((TEntity)dto!.Adapt(dtoType, entityType)!,
-                            _primaryKey.Select(part => part.GetValue(dto, null)));
-                }).ToList();
-                var ids = list.Select(s => s.Item2).ToArray();
-                var entityKey = typeof(TEntity).GetProperties()
-                    .Where(p => _primaryKey.Select(s => s.Name).Contains(p.Name)).ToArray();
-                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(_primaryKey, ids) : dbset.FindAll(dbkey2, ids2!))
-                    .ToDictionary(s => entityKey.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
+                    return (TEntity) dto!.Adapt(dtoType, entityType)!;
+                });
 
-                foreach (var entity in list.Select(s => s.Item1))
+                var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
+                var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => (TPk)_primaryKey.First().GetValue(dto, null)!).ToArray() : null;
+                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2, ids!) : dbset.FindAll(dbkey2, ids2!))
+                    .ToDictionary(s => dbkey2.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
+
+                foreach (var entity in list)
                 {
-                    var key = entityKey.Select(part => part.GetValue(entity, null)).GetTuple();
+                    var key = dbkey2.Select(part => part.GetValue(entity, null)).GetTuple();
                     var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
                     if (entityfound != null)
                     {
