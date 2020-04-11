@@ -7,6 +7,6 @@ namespace NosCore.Dao.Tests.Database.Entities.CompositeEntities
 {
     public class CompositeTph2Entity : CompositeTphBaseEntity
     {
-        public int SpecificPropertyTph2 { get; set; }
+        public int SpecificPropertyCompositeTph2 { get; set; }
     }
 }
