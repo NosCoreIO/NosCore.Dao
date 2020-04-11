@@ -4,14 +4,13 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
+using System.ComponentModel.DataAnnotations;
+
 namespace NosCore.Dao.Tests.TestsModels
 {
-    public class CompositeEntity
+    public class TphBaseDto : ITphDto
     {
-
-        public int Key1 { get; set; }
-
-        public int Key2 { get; set; }
+        public int Key { get; set; }
 
         public string? Value { get; set; }
     }

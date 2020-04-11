@@ -5,6 +5,8 @@
 // 
 
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Reflection;
 
 namespace NosCore.Dao.Interfaces
 {

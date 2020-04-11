@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NosCore.Dao.Tests.Database;
+using NosCore.Dao.Tests.Database.Entities;
 using NosCore.Dao.Tests.TestsModels;
 using Serilog;
 

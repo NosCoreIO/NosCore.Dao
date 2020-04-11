@@ -8,11 +8,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NosCore.Dao.Tests.TestsModels
 {
-    public class SimpleEntity
+    public class Tph1Dto : TphBaseDto
     {
-        [Key]
-        public int Key { get; set; }
-
-        public string? Value { get; set; }
+        public int SpecificPropertyTph1 { get; set; }
     }
 }
