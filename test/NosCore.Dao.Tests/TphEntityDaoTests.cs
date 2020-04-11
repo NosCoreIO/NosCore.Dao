@@ -11,7 +11,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.Database.Entities;
+using NosCore.Dao.Tests.Database.Entities.TphEntities;
 using NosCore.Dao.Tests.TestsModels;
+using NosCore.Dao.Tests.TestsModels.TphModels;
 using Serilog;
 
 namespace NosCore.Dao.Tests
@@ -40,21 +42,23 @@ namespace NosCore.Dao.Tests
             Assert.IsTrue(loadAll.First().Value == "test");
             Assert.IsTrue(result is TphBaseDto);
 
-            var tph1Dto = new Tph1Dto() { Key = 8, Value = "test" };
+            var tph1Dto = new Tph1Dto() { Key = 8, Value = "test", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
             Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
             Assert.IsTrue(result is Tph1Dto);
+            Assert.IsTrue((result as Tph1Dto)!.SpecificPropertyTph1 == 1);
 
-            var tph2Dto = new Tph2Dto() { Key = 9, Value = "test" };
+            var tph2Dto = new Tph2Dto() { Key = 9, Value = "test", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
             Assert.IsTrue(loadAll.Skip(2).First().Value == "test");
             Assert.IsTrue(result is Tph2Dto);
+            Assert.IsTrue((result as Tph2Dto)!.SpecificPropertyTph2 == 2);
         }
 
         [TestMethod]
@@ -74,21 +78,23 @@ namespace NosCore.Dao.Tests
             Assert.IsTrue(loadAll.First().Value == "test1");
             Assert.IsTrue(result is TphBaseDto);
 
-            var tph1Dto = new Tph1Dto() { Key = 8, Value = "test2" };
+            var tph1Dto = new Tph1Dto() { Key = 8, Value = "test2", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
             Assert.IsTrue(loadAll.Skip(1).First().Value == "test2");
             Assert.IsTrue(result is Tph1Dto);
+            Assert.IsTrue((result as Tph1Dto)!.SpecificPropertyTph1 == 1);
 
-            var tph2Dto = new Tph2Dto() { Key = 9, Value = "test3" };
+            var tph2Dto = new Tph2Dto() { Key = 9, Value = "test3", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
             Assert.IsTrue(loadAll.Skip(2).First().Value == "test3");
             Assert.IsTrue(result is Tph2Dto);
+            Assert.IsTrue((result as Tph2Dto)!.SpecificPropertyTph2 == 2);
         }
 
         [TestMethod]
@@ -97,8 +103,8 @@ namespace NosCore.Dao.Tests
             var simpleDtos = new List<TphBaseDto>
             {
                 new TphBaseDto {Key = 7, Value = "test1"},
-                new Tph1Dto {Key = 8, Value = "test2"},
-                new Tph2Dto {Key = 9, Value = "test3"}
+                new Tph1Dto {Key = 8, Value = "test2", SpecificPropertyTph1 = 1},
+                new Tph2Dto {Key = 9, Value = "test3", SpecificPropertyTph2 = 2}
             };
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
@@ -111,10 +117,12 @@ namespace NosCore.Dao.Tests
             Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
             Assert.IsTrue(loadAll.Skip(1).First().Value == "test2");
             Assert.IsTrue(loadAll.Skip(1).First() is Tph1Entity);
+            Assert.IsTrue((loadAll.Skip(1).First() as Tph1Entity)?.SpecificPropertyTph1 == 1);
 
             Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
             Assert.IsTrue(loadAll.Skip(2).First().Value == "test3");
             Assert.IsTrue(loadAll.Skip(2).First() is Tph2Entity);
+            Assert.IsTrue((loadAll.Skip(2).First() as Tph2Entity)?.SpecificPropertyTph2 == 2);
 
         }
 

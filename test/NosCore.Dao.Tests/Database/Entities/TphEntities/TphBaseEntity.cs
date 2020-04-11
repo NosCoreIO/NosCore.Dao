@@ -6,9 +6,9 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace NosCore.Dao.Tests.Database.Entities
+namespace NosCore.Dao.Tests.Database.Entities.TphEntities
 {
-    public class TphBaseEntity : ITphEntity
+    public class TphBaseEntity
     {
         [Key]
         public int Key { get; set; }

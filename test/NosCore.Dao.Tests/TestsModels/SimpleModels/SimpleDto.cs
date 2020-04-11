@@ -4,7 +4,7 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
-namespace NosCore.Dao.Tests.TestsModels
+namespace NosCore.Dao.Tests.TestsModels.SimpleModels
 {
     public class SimpleDto
     {

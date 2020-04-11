@@ -1,4 +1,4 @@
-﻿namespace NosCore.Dao.Tests.TestsModels
+﻿namespace NosCore.Dao.Tests.TestsModels.TphModels
 {
     public interface ITphDto
     {

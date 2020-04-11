@@ -11,7 +11,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.Database.Entities;
+using NosCore.Dao.Tests.Database.Entities.CompositeTphEntities;
 using NosCore.Dao.Tests.TestsModels;
+using NosCore.Dao.Tests.TestsModels.CompositeModels;
 using Serilog;
 
 namespace NosCore.Dao.Tests

@@ -4,9 +4,7 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
-using System.ComponentModel.DataAnnotations;
-
-namespace NosCore.Dao.Tests.TestsModels
+namespace NosCore.Dao.Tests.TestsModels.TphModels
 {
     public class Tph1Dto : TphBaseDto
     {

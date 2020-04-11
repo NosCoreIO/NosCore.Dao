@@ -4,7 +4,7 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // 
 
-namespace NosCore.Dao.Tests.Database.Entities
+namespace NosCore.Dao.Tests.Database.Entities.TphEntities
 {
     public class Tph2Entity : TphBaseEntity
     {

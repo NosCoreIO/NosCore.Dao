@@ -6,7 +6,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace NosCore.Dao.Tests.Database.Entities
+namespace NosCore.Dao.Tests.Database.Entities.SimpleEntities
 {
     public class SimpleEntity
     {
