@@ -92,7 +92,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("{Level:u4} {Timestamp:HH:mm:ss} -- {Message:lj}{NewLine}{Exception}", e);
+                _logger.Error("", e);
                 return default!;
             }
         }
@@ -146,7 +146,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("{Level:u4} {Timestamp:HH:mm:ss} -- {Message:lj}{NewLine}{Exception}", e);
+                _logger.Error("", e);
                 return false;
             }
         }
@@ -171,7 +171,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("{Level:u4} {Timestamp:HH:mm:ss} -- {Message:lj}{NewLine}{Exception}", e);
+                _logger.Error("", e);
                 return null;
             }
         }
