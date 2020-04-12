@@ -24,6 +24,8 @@ namespace NosCore.Dao.Tests.Database
 
         public virtual DbSet<TphBaseEntity>? TphBaseEntities { get; set; }
 
+        public virtual DbSet<SimpleWithFkEntity>? SimpleWithFkEntities { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<SimpleEntity>()
@@ -46,6 +48,10 @@ namespace NosCore.Dao.Tests.Database
                 .HasValue<CompositeTph1Entity>("CompositeTph1Entity")
                 .HasValue<CompositeTph2Entity>("CompositeTph2Entity");
 
+            modelBuilder.Entity<SimpleWithFkEntity>()
+                .HasOne(s => s.FkEntity)
+                .WithMany(s=>s.SimpleWithFkEntities)
+                .HasForeignKey(s=>s.Fk);
         }
     }
 }
