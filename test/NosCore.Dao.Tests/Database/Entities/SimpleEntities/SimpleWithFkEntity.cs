@@ -4,18 +4,20 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // -----------------------------------
 
-using System.Collections.Generic;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace NosCore.Dao.Tests.Database.Entities.SimpleEntities
 {
-    public class SimpleEntity
+    public class SimpleWithFkEntity
     {
         [Key]
         public int Key { get; set; }
 
         public string? Value { get; set; }
 
-        public virtual ICollection<SimpleWithFkEntity> SimpleWithFkEntities { get; set; } = new HashSet<SimpleWithFkEntity>();
+        public int Fk { get; set; }
+
+        public virtual SimpleEntity FkEntity { get; set; } = null!;
     }
 }
