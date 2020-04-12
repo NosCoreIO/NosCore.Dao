@@ -44,7 +44,9 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanReplaceDto()
         {
-            _dbContextBuilder.CreateContext().Set<SimpleEntity>().Add(new SimpleEntity { Key = 8, Value = "test" });
+            var otherContext = _dbContextBuilder.CreateContext();
+            otherContext.Set<SimpleEntity>().Add(new SimpleEntity { Key = 8, Value = "test" });
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
             var simpleDto = new SimpleDto { Key = 8, Value = "blabla" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();

@@ -45,8 +45,11 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanReplaceDto()
         {
-            _dbContextBuilder.CreateContext().Set<CompositeEntity>().Add(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" });
+            var otherContext = _dbContextBuilder.CreateContext();
+            otherContext.Set<CompositeEntity>().Add(new CompositeEntity { Key1 = 8, Key2 = 8, Value = "test" });
             var compositeDto = new CompositeDto { Key1 = 8, Key2 = 8, Value = "blabla" };
+            await otherContext.SaveChangesAsync().ConfigureAwait(false);
+
             await _dao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);

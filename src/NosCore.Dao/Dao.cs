@@ -66,6 +66,10 @@ namespace NosCore.Dao
             try
             {
                 var dtoType = dto!.GetType();
+                while (!dtoType.Name.EndsWith("Dto"))
+                {
+                    dtoType = dtoType.BaseType ?? throw new InvalidOperationException();
+                }
                 var entityType = _tphDtoToEntityDictionary[dtoType];
 
                 await using var context = _dbContextBuilder.CreateContext();
@@ -108,6 +112,10 @@ namespace NosCore.Dao
                 var list = enumerable.Select(dto =>
                 {
                     var dtoType = dto!.GetType();
+                    while (!dtoType.Name.EndsWith("Dto"))
+                    {
+                        dtoType = dtoType.BaseType ?? throw new InvalidOperationException();
+                    }
                     var entityType = _tphDtoToEntityDictionary[dtoType];
                     return (TEntity) dto!.Adapt(dtoType, entityType)!;
                 });
