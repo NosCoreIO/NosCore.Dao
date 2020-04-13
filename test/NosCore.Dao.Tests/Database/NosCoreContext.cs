@@ -5,6 +5,7 @@
 // -----------------------------------
 
 using Microsoft.EntityFrameworkCore;
+using NosCore.Dao.Extensions;
 using NosCore.Dao.Tests.Database.Entities.CompositeEntities;
 using NosCore.Dao.Tests.Database.Entities.CompositeTphEntities;
 using NosCore.Dao.Tests.Database.Entities.SimpleEntities;
@@ -28,6 +29,8 @@ namespace NosCore.Dao.Tests.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.RemovePluralizingTableNameConvention();
+
             modelBuilder.Entity<SimpleEntity>()
                 .Property(e => e.Key)
                 .ValueGeneratedOnAdd();
