@@ -10,7 +10,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
 using System.Runtime.CompilerServices;
 
 namespace NosCore.Dao.Extensions
@@ -49,16 +48,40 @@ namespace NosCore.Dao.Extensions
         private static IQueryable<T> FindAllComposite<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty, List<TKey> list)
             where T : class
         {
-            string WriteKeyQuery(object? key)
+            Expression? WriteKeyQuery(object? key, Expression entity)
             {
-                return string.Join(" and ",
-                    key is IEnumerable<object> enumerable
-                        ? enumerable.Select((t, i) => $"{{{i}}}={t}")
-                        : key!.GetType().GetFields().Select((t, i) => $"{{{i}}}={t.GetValue(key)}"));
+                List<Expression> propertiesEqualityExpression;
+                if (key is IEnumerable<object> enumerable)
+                {
+                    propertiesEqualityExpression = enumerable.Select((t, i) => Expression.Equal(Expression.Constant(t), Expression.Property(entity, keyProperty[i].Name))).ToList<Expression>();
+                }
+                else
+                {
+                    propertiesEqualityExpression = key!.GetType().GetFields()
+                        .Select((t, i) => Expression.Equal(
+                            Expression.Constant(t.GetValue(key)),
+                            Expression.Property(entity, keyProperty[i].Name))).ToList<Expression>();
+                }
+
+                Expression? andAlsoExpression = null;
+                for (int i = 0; i < propertiesEqualityExpression.Count; i++)
+                {
+                    andAlsoExpression = i == 0 ? propertiesEqualityExpression.ElementAt(0) : Expression.AndAlso(andAlsoExpression, propertiesEqualityExpression.ElementAt(i));
+                }
+
+                return andAlsoExpression;
             }
-            var getValue = string.Join(" or ", list.Select(s => $"({WriteKeyQuery(s)})"));
-            var request = string.Format(getValue, keyProperty.Select(s => s.Name).ToArray<object>());
-            return dbSet.Where(request);
+
+            var parameter = Expression.Parameter(typeof(T), "e");
+            var listOfChecks = list.Select(s => WriteKeyQuery(s, parameter)).ToList();
+            Expression? orElseExpression = null;
+            for (var i = 0; i < listOfChecks.Count; i++)
+            {
+                orElseExpression = i == 0 ? listOfChecks.ElementAt(0) : Expression.OrElse(orElseExpression, listOfChecks.ElementAt(i));
+            }
+
+            var lambda = Expression.Lambda<Func<T, bool>>(orElseExpression, parameter);
+            return dbSet.Where(lambda);
         }
     }
 }
