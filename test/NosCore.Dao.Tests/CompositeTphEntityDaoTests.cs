@@ -216,24 +216,10 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeTphBaseEntity>().AddAsync(new CompositeTph2Entity { Key1 = 9, Key2 = 9, Value = "test", SpecificPropertyCompositeTph2 = 2 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deletedEntities = (await _dao.TryDeleteAsync(new[] { (7, 7), (9,9), (8,8) }).ConfigureAwait(false)).ToList();
+            var deletedEntities = (await _dao.TryDeleteAsync(new[] { (7, 7), (9,9), (8,8) }).ConfigureAwait(false));
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.IsTrue(deletedEntities.Count() == 3);
+            Assert.IsTrue(deletedEntities);
             Assert.IsTrue(!loadAll.Any());
-
-            var deleted = deletedEntities.First(s => s.Key1 == 7 && s.Key2 == 7);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsFalse(deleted is CompositeTph2Dto || deleted is CompositeTph1Dto);
-
-            deleted = deletedEntities.First(s => s.Key1 == 8 && s.Key2 == 8);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is CompositeTph1Dto);
-            Assert.IsTrue((deleted as CompositeTph1Dto)!.SpecificPropertyCompositeTph1 == 1);
-
-            deleted = deletedEntities.First(s => s.Key1 == 9 && s.Key2 == 9);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is CompositeTph2Dto);
-            Assert.IsTrue((deleted as CompositeTph2Dto)!.SpecificPropertyCompositeTph2 == 2);
         }
 
         [TestMethod]

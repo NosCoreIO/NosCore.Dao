@@ -15,7 +15,7 @@ namespace NosCore.Dao.Interfaces
     {
         Task<TDto> TryDeleteAsync(TPk dtokey);
 
-        public Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys);
+        Task<bool> TryDeleteAsync(IEnumerable<TPk> dtokeys);
 
         Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate);
 
