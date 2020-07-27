@@ -13,6 +13,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using LinqToDB;
+using LinqToDB.Data;
+using LinqToDB.EntityFrameworkCore;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using NosCore.Dao.Extensions;
@@ -59,6 +62,7 @@ namespace NosCore.Dao
                     .Contains(s.Name)
                 ).ToArray();
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
+            LinqToDBForEFTools.Initialize();
         }
 
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
@@ -117,7 +121,7 @@ namespace NosCore.Dao
                         dtoType = dtoType.BaseType ?? throw new InvalidOperationException();
                     }
                     var entityType = _tphDtoToEntityDictionary[dtoType];
-                    return (TEntity) dto!.Adapt(dtoType, entityType)!;
+                    return (TEntity)dto!.Adapt(dtoType, entityType)!;
                 });
 
                 var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
@@ -138,8 +142,7 @@ namespace NosCore.Dao
                     entitytoadd.Add(entity);
                 }
 
-                dbset.AddRange(entitytoadd);
-
+                context.BulkCopy(new BulkCopyOptions(), entitytoadd);
                 await context.SaveChangesAsync().ConfigureAwait(false);
 
                 return true;
@@ -151,7 +154,7 @@ namespace NosCore.Dao
             }
         }
 
-        public async Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys)
+        public async Task<bool> TryDeleteAsync(IEnumerable<TPk> dtokeys)
         {
             try
             {
@@ -159,20 +162,13 @@ namespace NosCore.Dao
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
-                var deletedDto = toDelete.ToList().Select(entity =>
-                {
-                    var entityType = entity.GetType();
-                    var dtoType = _tphEntityToDtoDictionary[entityType];
-                    return (TDto)entity.Adapt(entityType, dtoType)!;
-                });
-                dbset.RemoveRange(toDelete);
-                await context.SaveChangesAsync().ConfigureAwait(false);
-                return deletedDto;
+                await toDelete.DeleteAsync();
+                return true;
             }
             catch (Exception e)
             {
                 _logger.Error("", e);
-                return null;
+                return false;
             }
         }
 
@@ -222,7 +218,7 @@ namespace NosCore.Dao
 
             await using var context = _dbContextBuilder.CreateContext();
             var dbset = context.Set<TEntity>();
-            var ent = await dbset.FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
+            var ent = await EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(dbset, predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
             if (ent == null)
             {
                 return default!;
