@@ -101,7 +101,6 @@ namespace NosCore.Dao
         {
             try
             {
-
                 var enumerable = dtos.ToList();
                 await using var context = _dbContextBuilder.CreateContext();
 
@@ -159,12 +158,7 @@ namespace NosCore.Dao
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
-                var deletedDto = toDelete.ToList().Select(entity =>
-                {
-                    var entityType = entity.GetType();
-                    var dtoType = _tphEntityToDtoDictionary[entityType];
-                    return (TDto)entity.Adapt(entityType, dtoType)!;
-                });
+                var deletedDto = toDelete.ToList().Select(ToDto);
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return deletedDto;
@@ -197,9 +191,7 @@ namespace NosCore.Dao
 
                 if (entityfound != null)
                 {
-                    var entityType = entityfound.GetType();
-                    var dtoType = _tphEntityToDtoDictionary[entityType];
-                    deletedDto = (TDto)entityfound.Adapt(entityType, dtoType)!;
+                    deletedDto = ToDto(entityfound);
                     dbset.Remove(entityfound);
                 }
 
@@ -213,53 +205,31 @@ namespace NosCore.Dao
             }
         }
 
-        public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
+        private TDto ToDto(TEntity ent)
         {
-            if (predicate == null)
-            {
-                return default!;
-            }
-
-            await using var context = _dbContextBuilder.CreateContext();
-            var dbset = context.Set<TEntity>();
-            var ent = await dbset.FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
-            if (ent == null)
-            {
-                return default!;
-            }
             var entityType = ent.GetType();
             var dtoType = _tphEntityToDtoDictionary[entityType];
-
             return (TDto)ent.Adapt(entityType, dtoType)!;
+        }
+
+        public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
+        {
+            await using var context = _dbContextBuilder.CreateContext();
+            var ent = await context.Set<TEntity>().FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
+            return ent == null ? default! : ToDto(ent);
         }
 
         public IEnumerable<TDto> LoadAll()
         {
             using var context = _dbContextBuilder.CreateContext();
-            return context.Set<TEntity>().ToList().Select(entity =>
-            {
-                var entityType = entity.GetType();
-                var dtoType = _tphEntityToDtoDictionary[entityType];
-                return (TDto)entity.Adapt(entityType, dtoType)!;
-            });
+            return context.Set<TEntity>().ToList().Select(ToDto);
         }
 
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
-            if (predicate == null)
-            {
-                return default!;
-            }
-
             using var context = _dbContextBuilder.CreateContext();
-            var dbset = context.Set<TEntity>();
-            var entities = dbset.Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.ToList().Select(entity =>
-            {
-                var entityType = entity.GetType();
-                var dtoType = _tphEntityToDtoDictionary[entityType];
-                return (TDto)entity.Adapt(entityType, dtoType)!;
-            });
+            var entities = context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
+            return entities.ToList().Select(ToDto);
         }
     }
 }
