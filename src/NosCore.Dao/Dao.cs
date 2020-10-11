@@ -43,7 +43,7 @@ namespace NosCore.Dao
             _tphDtoToEntityDictionary = new ReadOnlyDictionary<Type, Type>(_tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key));
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            using var context = _dbContextBuilder.CreateContext();
+            var context = _dbContextBuilder.CreateContext();
             var key = typeof(TDto).GetProperties()
                 .Where(s => context.Model.FindEntityType(typeof(TEntity))
                     .FindPrimaryKey().Properties.Select(x => x.Name)
@@ -57,7 +57,7 @@ namespace NosCore.Dao
             try
             {
                 var entity = ToEntity(dto);
-                await using var context = _dbContextBuilder.CreateContext();
+                var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
                 var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
@@ -86,7 +86,7 @@ namespace NosCore.Dao
             try
             {
                 var enumerable = dtos.ToList();
-                await using var context = _dbContextBuilder.CreateContext();
+                var context = _dbContextBuilder.CreateContext();
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
@@ -128,7 +128,7 @@ namespace NosCore.Dao
         {
             try
             {
-                await using var context = _dbContextBuilder.CreateContext();
+                var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
@@ -149,7 +149,7 @@ namespace NosCore.Dao
             try
             {
                 TDto deletedDto = default!;
-                await using var context = _dbContextBuilder.CreateContext();
+                var context = _dbContextBuilder.CreateContext();
                 var dbset = context.Set<TEntity>();
                 var key = dtokey is ITuple keyArray ? keyArray
                     .GetType()
@@ -176,20 +176,20 @@ namespace NosCore.Dao
 
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
-            await using var context = _dbContextBuilder.CreateContext();
+            var context = _dbContextBuilder.CreateContext();
             var ent = await context.Set<TEntity>().FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
             return ent == null ? default! : ToDto(ent);
         }
 
         public IEnumerable<TDto> LoadAll()
         {
-            using var context = _dbContextBuilder.CreateContext();
+            var context = _dbContextBuilder.CreateContext();
             return context.Set<TEntity>().ToList().Select(ToDto);
         }
 
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
-            using var context = _dbContextBuilder.CreateContext();
+            var context = _dbContextBuilder.CreateContext();
             var entities = context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
             return entities.ToList().Select(ToDto);
         }
