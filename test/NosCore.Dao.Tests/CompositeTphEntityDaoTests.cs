@@ -27,7 +27,7 @@ namespace NosCore.Dao.Tests
         public void Setup()
         {
             _dbContextBuilder = new DbContextBuilder();
-            _dao = new Dao<CompositeTphBaseEntity, ICompositeTphDto, (int, int)>(new Mock<ILogger>().Object, _dbContextBuilder);
+            _dao = new Dao<CompositeTphBaseEntity, ICompositeTphDto, (int, int)>(new Mock<ILogger>().Object, _dbContextBuilder.CreateContext);
         }
 
         [TestMethod]

@@ -4,9 +4,11 @@
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
 // -----------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NosCore.Dao.Tests.Database;
@@ -20,13 +22,13 @@ namespace NosCore.Dao.Tests
     public class SimpleWithFkEntityDaoTests
     {
         private Dao<SimpleWithFkEntity, SimpleWithFkDto, int> _dao = null!;
-        private DbContextBuilder _dbContextBuilder = null!;
+        private Func<DbContext> _dbContextBuilder = null!;
 
         [TestInitialize]
         public async Task SetupAsync()
         {
-            _dbContextBuilder = new DbContextBuilder();
-            var init = _dbContextBuilder.CreateContext();
+            _dbContextBuilder = new DbContextBuilder().CreateContext;
+            var init = _dbContextBuilder();
             init.Add(new SimpleEntity()
             {
                 Key = 1,
@@ -42,7 +44,7 @@ namespace NosCore.Dao.Tests
         {
             var simpleDto = new SimpleWithFkDto { Key = 8, Value = "test", Fk = 1 };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "test");
@@ -51,12 +53,12 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanReplaceDto()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             otherContext.Set<SimpleWithFkEntity>().Add(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 });
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
             var simpleDto = new SimpleWithFkDto { Key = 8, Value = "blabla", Fk = 1 };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "blabla");
@@ -72,7 +74,7 @@ namespace NosCore.Dao.Tests
             };
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "blabla");
@@ -83,7 +85,7 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanInsertAndReplaceMultipleDtos()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>().AddAsync(new SimpleWithFkEntity { Key = 8, Value = "thisisatest", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
@@ -94,7 +96,7 @@ namespace NosCore.Dao.Tests
             };
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
             Assert.IsTrue(loadAll.Count == 2);
             Assert.IsTrue(loadAll.First().Key == 8);
             Assert.IsTrue(loadAll.First().Value == "blabla");
@@ -105,7 +107,7 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanLoadAll()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>()
                 .AddRangeAsync(new SimpleWithFkEntity { Key = 8, Value = "thisisatest", Fk = 1 }, new SimpleWithFkEntity { Key = 9, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
@@ -123,7 +125,7 @@ namespace NosCore.Dao.Tests
         {
             var simpleDto = new SimpleWithFkDto { Key = 0, Value = "test", Fk = 1 };
             var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsTrue(loadAll.First().Key == 1);
             Assert.IsTrue(loadAll.First().Value == "test");
@@ -135,12 +137,12 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanDelete()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>().AddAsync(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Key == 8);
             Assert.IsTrue(deleted.Value == "test");
@@ -149,12 +151,12 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task DeleteOnNotFoundReturnNull()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>().AddAsync(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 1);
             Assert.IsNull(deleted);
         }
@@ -162,12 +164,12 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task DeleteWorksWithListOfKeys()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>().AddRangeAsync(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 }, new SimpleWithFkEntity { Key = 9, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var deleted = await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsTrue(deleted.Count() == 2);
         }
@@ -175,12 +177,12 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task DeleteWorksWithListOfKeysButSomeMissingObjects()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>().AddAsync(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false)).ToList();
-            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleWithFkEntity>().ToList();
+            var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsNotNull(deleted);
             Assert.IsTrue(deleted.Count() == 1);
@@ -191,7 +193,7 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task CanUseWhereClause()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>()
                 .AddRangeAsync(new SimpleWithFkEntity { Key = 8, Value = "thisisatest", Fk = 1 }, new SimpleWithFkEntity { Key = 9, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
@@ -205,7 +207,7 @@ namespace NosCore.Dao.Tests
         [TestMethod]
         public async Task FirstOrDefaultReturnObject()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>()
                 .AddRangeAsync(new SimpleWithFkEntity { Key = 8, Value = "thisisatest", Fk = 1 }, new SimpleWithFkEntity { Key = 9, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
@@ -220,7 +222,7 @@ namespace NosCore.Dao.Tests
 
         public async Task FirstOrDefaultReturnNullWhenNotFoundObject()
         {
-            var otherContext = _dbContextBuilder.CreateContext();
+            var otherContext = _dbContextBuilder();
             await otherContext.Set<SimpleWithFkEntity>()
                 .AddRangeAsync(new SimpleWithFkEntity { Key = 8, Value = "thisisatest", Fk = 1 }, new SimpleWithFkEntity { Key = 9, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
