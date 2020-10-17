@@ -27,7 +27,7 @@ namespace NosCore.Dao.Tests
         {
             _dbContextBuilder = new DbContextBuilder();
             _dao =
-                new Dao<SimpleEntity, SimpleDto, int>(new Mock<ILogger>().Object, _dbContextBuilder);
+                new Dao<SimpleEntity, SimpleDto, int>(new Mock<ILogger>().Object, _dbContextBuilder.CreateContext);
         }
 
         [TestMethod]

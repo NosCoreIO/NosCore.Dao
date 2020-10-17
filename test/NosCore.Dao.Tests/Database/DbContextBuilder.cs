@@ -10,7 +10,7 @@ using NosCore.Dao.Interfaces;
 
 namespace NosCore.Dao.Tests.Database
 {
-    public class DbContextBuilder : IDbContextBuilder
+    public class DbContextBuilder
     {
         private readonly DbContextOptions _options;
 
