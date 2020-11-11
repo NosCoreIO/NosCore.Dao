@@ -95,12 +95,12 @@ namespace NosCore.Dao
                 var list = enumerable.Select(ToEntity);
                 var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
                 var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => (TPk)_primaryKey.First().GetValue(dto, null)!).ToArray() : null;
-                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2, ids!) : dbset.FindAll(dbkey2, ids2!))
-                    .ToDictionary(s => dbkey2.Select(part => part.GetValue(s, null)).GetTuple(), x => x);
+                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2!, ids!) : dbset.FindAll(dbkey2!, ids2!))
+                    .ToDictionary(s => dbkey2.Select(part => part!.GetValue(s, null)).GetTuple(), x => x);
 
                 foreach (var entity in list)
                 {
-                    var key = dbkey2.Select(part => part.GetValue(entity, null)).GetTuple();
+                    var key = dbkey2.Select(part => part!.GetValue(entity, null)).GetTuple();
                     var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
                     if (entityfound != null)
                     {
@@ -131,7 +131,7 @@ namespace NosCore.Dao
                 var context = _dbContextBuilder();
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
-                var toDelete = dbset.FindAll(dbkey, dtokeys.ToArray());
+                var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
                 var deletedDto = toDelete.ToList().Select(ToDto);
                 dbset.RemoveRange(toDelete);
                 await context.SaveChangesAsync().ConfigureAwait(false);

@@ -171,7 +171,7 @@ namespace NosCore.Dao.Tests
             var deleted = await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted.Count() == 2);
+            Assert.IsTrue(deleted!.Count() == 2);
         }
 
         [TestMethod]
@@ -181,7 +181,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<SimpleWithFkEntity>().AddAsync(new SimpleWithFkEntity { Key = 8, Value = "test", Fk = 1 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false)).ToList();
+            var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
             Assert.IsTrue(loadAll.Count == 0);
             Assert.IsNotNull(deleted);

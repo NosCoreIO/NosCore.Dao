@@ -23,7 +23,7 @@ namespace NosCore.Dao.Extensions
             var typeArgs = enumerable.Select(_ => typeof(T)).ToArray();
             var specificType = genericType.MakeGenericType(typeArgs);
             var constructorArguments = enumerable.Cast<object>().ToArray();
-            return (ITuple)Activator.CreateInstance(specificType, constructorArguments);
+            return (ITuple)Activator.CreateInstance(specificType, constructorArguments)!;
         }
 
         public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty,
@@ -66,7 +66,7 @@ namespace NosCore.Dao.Extensions
                 Expression? andAlsoExpression = null;
                 for (int i = 0; i < propertiesEqualityExpression.Count; i++)
                 {
-                    andAlsoExpression = i == 0 ? propertiesEqualityExpression.ElementAt(0) : Expression.AndAlso(andAlsoExpression, propertiesEqualityExpression.ElementAt(i));
+                    andAlsoExpression = i == 0 ? propertiesEqualityExpression.ElementAt(0) : Expression.AndAlso(andAlsoExpression!, propertiesEqualityExpression.ElementAt(i));
                 }
 
                 return andAlsoExpression;
@@ -77,10 +77,10 @@ namespace NosCore.Dao.Extensions
             Expression? orElseExpression = null;
             for (var i = 0; i < listOfChecks.Count; i++)
             {
-                orElseExpression = i == 0 ? listOfChecks.ElementAt(0) : Expression.OrElse(orElseExpression, listOfChecks.ElementAt(i));
+                orElseExpression = i == 0 ? listOfChecks.ElementAt(0) : Expression.OrElse(orElseExpression!, listOfChecks.ElementAt(i)!);
             }
 
-            var lambda = Expression.Lambda<Func<T, bool>>(orElseExpression, parameter);
+            var lambda = Expression.Lambda<Func<T, bool>>(orElseExpression!, parameter);
             return dbSet.Where(lambda);
         }
     }
