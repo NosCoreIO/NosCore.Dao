@@ -216,7 +216,7 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeTphBaseEntity>().AddAsync(new CompositeTph2Entity { Key1 = 9, Key2 = 9, Value = "test", SpecificPropertyCompositeTph2 = 2 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deletedEntities = (await _dao.TryDeleteAsync(new[] { (7, 7), (9,9), (8,8) }).ConfigureAwait(false)).ToList();
+            var deletedEntities = (await _dao.TryDeleteAsync(new[] { (7, 7), (9,9), (8,8) }).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
             Assert.IsTrue(deletedEntities.Count() == 3);
             Assert.IsTrue(!loadAll.Any());

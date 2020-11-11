@@ -200,8 +200,8 @@ namespace NosCore.Dao.Tests
             otherContext.Set<TphBaseEntity>().Add(new Tph2Entity() { Key = 9, Value = "test", SpecificPropertyTph2 = 2});
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var deletedEntities = (await _dao.TryDeleteAsync(new[] { 7, 9, 8 }).ConfigureAwait(false)).ToList();
-            var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
+            var deletedEntities = (await _dao.TryDeleteAsync(new[] { 7, 9, 8 }).ConfigureAwait(false))!.ToList();
+            var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>()!.ToList();
             Assert.IsTrue(deletedEntities.Count() == 3);
             Assert.IsTrue(!loadAll.Any());
 
