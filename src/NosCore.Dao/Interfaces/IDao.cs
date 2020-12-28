@@ -11,7 +11,12 @@ using System.Threading.Tasks;
 
 namespace NosCore.Dao.Interfaces
 {
-    public interface IDao<TDto, in TPk>
+    public interface IDao<out TDto>
+    {
+        IEnumerable<TDto> LoadAll();
+    }
+
+    public interface IDao<TDto, in TPk> : IDao<TDto>
     {
         Task<TDto> TryDeleteAsync(TPk dtokey);
 
@@ -22,8 +27,6 @@ namespace NosCore.Dao.Interfaces
         Task<TDto> TryInsertOrUpdateAsync(TDto dto);
 
         Task<bool> TryInsertOrUpdateAsync(IEnumerable<TDto> dtos);
-
-        IEnumerable<TDto> LoadAll();
 
         IEnumerable<TDto>? Where(Expression<Func<TDto, bool>> predicate);
     }
