@@ -5,7 +5,7 @@
 </p>
 
 [![NuGet](https://img.shields.io/nuget/v/NosCore.Dao.svg?style=flat-square)](https://www.nuget.org/packages/NosCore.Dao/)
-[![Travis build status](https://travis-ci.com/NosCoreIO/NosCore.Dao.svg?branch=master)](https://travis-ci.com/NosCoreIO/NosCore.Dao)
+[![.NET](https://github.com/NosCoreIO/NosCore.Dao/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/NosCoreIO/NosCore.Dao/actions/workflows/dotnet.yml)
 
 ## You like our work ? ##
 <a href='https://github.com/sponsors/0Lucifer0' target='_blank'><img height='48' style='border:0px;height:46px;' src='https://i.gyazo.com/47b2ca2eb6e1ce38d02b04c410e1c82a.png' border='0' alt='Sponsor me!' /></a>
