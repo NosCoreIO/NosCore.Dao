@@ -45,9 +45,9 @@ namespace NosCore.Dao
             _dbContextBuilder = dbContextBuilder;
             var context = _dbContextBuilder();
             var key = typeof(TDto).GetProperties()
-                .Where(s => context.Model.FindEntityType(typeof(TEntity))
-                    .FindPrimaryKey().Properties.Select(x => x.Name)
-                    .Contains(s.Name)
+                .Where(s => context.Model.FindEntityType(typeof(TEntity))?
+                    .FindPrimaryKey()?.Properties.Select(x => x.Name)
+                    .Contains(s.Name) ?? false
                 ).ToArray();
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }

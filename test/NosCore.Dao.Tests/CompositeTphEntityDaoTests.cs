@@ -74,7 +74,7 @@ namespace NosCore.Dao.Tests
 
             var baseDto = new CompositeTphBaseDto() { Key1 = 7, Key2 = 7, Value = "test1" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
-            var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
+            var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.First().Key1 == 7);
             Assert.IsTrue(loadAll.First().Key2 == 7);
@@ -83,7 +83,7 @@ namespace NosCore.Dao.Tests
 
             var CompositeTph1Dto = new CompositeTph1Dto() { Key1 = 8, Key2 = 8, Value = "test2", SpecificPropertyCompositeTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph1Dto).ConfigureAwait(false);
-            loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
+            loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.Skip(1).First().Key1 == 8);
             Assert.IsTrue(loadAll.Skip(1).First().Key2 == 8);
@@ -93,7 +93,7 @@ namespace NosCore.Dao.Tests
 
             var CompositeTph2Dto = new CompositeTph2Dto() { Key1 = 9, Key2 = 9, Value = "test3", SpecificPropertyCompositeTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph2Dto).ConfigureAwait(false);
-            loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
+            loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.Skip(2).First().Key1 == 9);
             Assert.IsTrue(loadAll.Skip(2).First().Key2 == 9);
@@ -245,10 +245,10 @@ namespace NosCore.Dao.Tests
             await otherContext.Set<CompositeTphBaseEntity>().AddAsync(new CompositeTph2Entity { Key1 = 9, Key2 = 9, Value = "test", SpecificPropertyCompositeTph2 = 2 }).ConfigureAwait(false);
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
-            var loadAll = _dao.LoadAll().ToList();
+            var loadAll = _dao.LoadAll().OrderBy(x => x.Key1).ToList();
             Assert.IsTrue(loadAll.Count == 3);
             Assert.IsTrue(loadAll.First().Key1 == 7);
-            Assert.IsTrue(loadAll.First().Key1 == 7);
+            Assert.IsTrue(loadAll.First().Key2 == 7);
             Assert.IsTrue(loadAll.First().Value == "test");
 
             Assert.IsTrue(loadAll.Skip(1).First().Key1 == 8);

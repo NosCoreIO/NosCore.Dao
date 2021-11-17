@@ -15,7 +15,7 @@ namespace NosCore.Dao.Tests.Database
 {
     public class NosCoreContext : DbContext
     {
-        public NosCoreContext(DbContextOptions? options) : base(options)
+        public NosCoreContext(DbContextOptions options) : base(options)
         {
         }
 
