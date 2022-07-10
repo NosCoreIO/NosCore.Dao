@@ -57,7 +57,7 @@ namespace NosCore.Dao.Extensions
                 }
                 else
                 {
-                    propertiesEqualityExpression = key!.GetType().GetFields()
+                    propertiesEqualityExpression = key!.GetType().GetFields().OrderBy(field => field.MetadataToken)
                         .Select((t, i) => Expression.Equal(
                             Expression.Constant(t.GetValue(key)),
                             Expression.Property(entity, keyProperty[i].Name))).ToList<Expression>();
