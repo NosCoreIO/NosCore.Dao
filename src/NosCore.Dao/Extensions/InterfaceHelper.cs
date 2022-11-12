@@ -17,12 +17,12 @@ namespace NosCore.Dao.Extensions
         public static IEnumerable<Type> GetAllTypesOf<T>()
         {
             var platform = Environment.OSVersion.Platform.ToString();
-            var runtimeAssemblyNames = DependencyContext.Default.GetRuntimeAssemblyNames(platform);
+            var runtimeAssemblyNames = DependencyContext.Default?.GetRuntimeAssemblyNames(platform);
 
-            return runtimeAssemblyNames
+            return runtimeAssemblyNames?
                 .Select(Assembly.Load)
                 .SelectMany(a => a.ExportedTypes)
-                .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface);
+                .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface) ?? new List<Type>();
         }
 
         public static string TrimEnd(this string source, string value)
