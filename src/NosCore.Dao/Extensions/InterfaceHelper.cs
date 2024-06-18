@@ -29,9 +29,9 @@ namespace NosCore.Dao.Extensions
                         .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface));
 
                 }
-                catch (ReflectionTypeLoadException ex)
+                catch (Exception ex)
                 {
-                    result.AddRange(ex.Types.Where(x => x != null).Cast<Type>());
+                   
                 }
             }
 
