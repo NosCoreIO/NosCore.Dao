@@ -8,7 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.Extensions.DependencyModel;
+using Serilog.Context;
 
 namespace NosCore.Dao.Extensions
 {
@@ -16,26 +18,9 @@ namespace NosCore.Dao.Extensions
     {
         public static IEnumerable<Type> GetAllTypesOf<T>()
         {
-            var platform = Environment.OSVersion.Platform.ToString();
-            var runtimeAssemblyNames = DependencyContext.Default?.GetRuntimeAssemblyNames(platform).ToList();
-
-            var result = new List<Type>();
-            foreach (var assemblyName in runtimeAssemblyNames ?? [])
-            {
-                try
-                {
-                    result.AddRange(Assembly.Load(assemblyName)
-                            .ExportedTypes
-                        .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface));
-
-                }
-                catch
-                {
-                   
-                }
-            }
-
-            return result;
+            return AssemblyLoadContext.All.SelectMany(x=>x.Assemblies)
+                .SelectMany(x=>x.ExportedTypes)
+                .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface) ?? [];
         }
 
         public static string TrimEnd(this string source, string value)
