@@ -29,7 +29,7 @@ namespace NosCore.Dao.Extensions
                         .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface));
 
                 }
-                catch (Exception ex)
+                catch ()
                 {
                    
                 }
