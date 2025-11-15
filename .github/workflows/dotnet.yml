@@ -13,10 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.100'
+
+    - name: Install .NET 10
+      run: |
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+        chmod +x dotnet-install.sh
+        ./dotnet-install.sh --channel 10.0 --install-dir ~/.dotnet
+        echo "$HOME/.dotnet" >> $GITHUB_PATH
 
     - name: Verify .NET installation
       run: dotnet --list-sdks
