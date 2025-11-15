@@ -36,7 +36,7 @@ namespace NosCore.Dao.Tests
             var baseDto = new CompositeTphBaseDto() { Key1 = 7, Key2 = 7, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(1, loadAll.Count);
+            Assert.HasCount(loadAll, 1);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test", loadAll.First().Value);
@@ -45,7 +45,7 @@ namespace NosCore.Dao.Tests
             var CompositeTph1Dto = new CompositeTph1Dto() { Key1 = 8, Key2 = 8, Value = "test", SpecificPropertyCompositeTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key1);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key1);
             Assert.AreEqual("test", loadAll.Skip(1).First().Value);
@@ -55,7 +55,7 @@ namespace NosCore.Dao.Tests
             var CompositeTph2Dto = new CompositeTph2Dto() { Key1 = 9, Key2 = 9, Value = "test", SpecificPropertyCompositeTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key1);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key2);
             Assert.AreEqual("test", loadAll.Skip(2).First().Value);
@@ -75,7 +75,7 @@ namespace NosCore.Dao.Tests
             var baseDto = new CompositeTphBaseDto() { Key1 = 7, Key2 = 7, Value = "test1" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test1", loadAll.First().Value);
@@ -84,7 +84,7 @@ namespace NosCore.Dao.Tests
             var CompositeTph1Dto = new CompositeTph1Dto() { Key1 = 8, Key2 = 8, Value = "test2", SpecificPropertyCompositeTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key1);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key2);
             Assert.AreEqual("test2", loadAll.Skip(1).First().Value);
@@ -94,7 +94,7 @@ namespace NosCore.Dao.Tests
             var CompositeTph2Dto = new CompositeTph2Dto() { Key1 = 9, Key2 = 9, Value = "test3", SpecificPropertyCompositeTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(CompositeTph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(x => x.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key1);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key2);
             Assert.AreEqual("test3", loadAll.Skip(2).First().Value);
@@ -114,7 +114,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(s => s.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test1", loadAll.First().Value);
@@ -152,7 +152,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().OrderBy(s => s.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test1", loadAll.First().Value);
@@ -182,7 +182,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync((7, 7)).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(7, deleted.Key1);
             Assert.AreEqual(7, deleted.Key2);
             Assert.AreEqual("test", deleted.Value);
@@ -190,7 +190,7 @@ namespace NosCore.Dao.Tests
 
             deleted = await _dao.TryDeleteAsync((8,8)).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(1, loadAll.Count);
+            Assert.HasCount(loadAll, 1);
             Assert.AreEqual(8, deleted.Key1);
             Assert.AreEqual(8, deleted.Key2);
             Assert.AreEqual("test", deleted.Value);
@@ -199,7 +199,7 @@ namespace NosCore.Dao.Tests
 
             deleted = await _dao.TryDeleteAsync((9, 9)).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<CompositeTphBaseEntity>().ToList();
-            Assert.AreEqual(0, loadAll.Count);
+            Assert.HasCount(loadAll, 0);
             Assert.AreEqual(9, deleted.Key1);
             Assert.AreEqual(9, deleted.Key2);
             Assert.AreEqual("test", deleted.Value);
@@ -246,7 +246,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().OrderBy(x => x.Key1).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test", loadAll.First().Value);
@@ -272,7 +272,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.Where(s => (s.Key1 == 7 && s.Key2 == 7) || (s.Key1 == 8 && s.Key2 == 8)).ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(7, loadAll.First().Key1);
             Assert.AreEqual(7, loadAll.First().Key2);
             Assert.AreEqual("test", loadAll.First().Value);

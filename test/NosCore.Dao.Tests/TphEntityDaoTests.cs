@@ -35,7 +35,7 @@ namespace NosCore.Dao.Tests
             var baseDto = new TphBaseDto() { Key = 7, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(1, loadAll.Count);
+            Assert.HasCount(loadAll, 1);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
             Assert.IsInstanceOfType(result, typeof(TphBaseDto));
@@ -43,7 +43,7 @@ namespace NosCore.Dao.Tests
             var tph1Dto = new Tph1Dto() { Key = 8, Value = "test", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key);
             Assert.AreEqual("test", loadAll.Skip(1).First().Value);
             Assert.IsInstanceOfType(result, typeof(Tph1Dto));
@@ -52,7 +52,7 @@ namespace NosCore.Dao.Tests
             var tph2Dto = new Tph2Dto() { Key = 9, Value = "test", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key);
             Assert.AreEqual("test", loadAll.Skip(2).First().Value);
             Assert.IsInstanceOfType(result, typeof(Tph2Dto));
@@ -71,7 +71,7 @@ namespace NosCore.Dao.Tests
             var baseDto = new TphBaseDto() { Key = 7, Value = "test1" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test1", loadAll.First().Value);
             Assert.IsInstanceOfType(result, typeof(TphBaseDto));
@@ -79,7 +79,7 @@ namespace NosCore.Dao.Tests
             var tph1Dto = new Tph1Dto() { Key = 8, Value = "test2", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(8, loadAll.Skip(1).First().Key);
             Assert.AreEqual("test2", loadAll.Skip(1).First().Value);
             Assert.IsInstanceOfType(result, typeof(Tph1Dto));
@@ -88,7 +88,7 @@ namespace NosCore.Dao.Tests
             var tph2Dto = new Tph2Dto() { Key = 9, Value = "test3", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(9, loadAll.Skip(2).First().Key);
             Assert.AreEqual("test3", loadAll.Skip(2).First().Value);
             Assert.IsInstanceOfType(result, typeof(Tph2Dto));
@@ -107,7 +107,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().OrderBy(s => s.Key).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test1", loadAll.First().Value);
             Assert.IsFalse(loadAll.First() is Tph1Entity || loadAll.First() is Tph2Entity);
@@ -142,7 +142,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().OrderBy(s => s.Key).ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test1", loadAll.First().Value);
             Assert.IsFalse(loadAll.First() is Tph1Entity || loadAll.First() is Tph2Entity);
@@ -169,14 +169,14 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(7).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(7, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsFalse(deleted is Tph2Dto || deleted is Tph1Dto);
 
             deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(1, loadAll.Count);
+            Assert.HasCount(loadAll, 1);
             Assert.AreEqual(8, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsInstanceOfType(deleted, typeof(Tph1Dto));
@@ -184,7 +184,7 @@ namespace NosCore.Dao.Tests
 
             deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.AreEqual(0, loadAll.Count);
+            Assert.HasCount(loadAll, 0);
             Assert.AreEqual(9, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsInstanceOfType(deleted, typeof(Tph2Dto));
@@ -230,7 +230,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().ToList();
-            Assert.AreEqual(3, loadAll.Count);
+            Assert.HasCount(loadAll, 3);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
 
@@ -253,7 +253,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.Where(s=>s.Key == 7 || s.Key == 8).ToList();
-            Assert.AreEqual(2, loadAll.Count);
+            Assert.HasCount(loadAll, 2);
             Assert.AreEqual(7, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
 
