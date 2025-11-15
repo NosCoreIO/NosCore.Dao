@@ -21,6 +21,12 @@ using Serilog;
 
 namespace NosCore.Dao
 {
+    /// <summary>
+    /// Generic data access object implementation for CRUD operations.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type</typeparam>
+    /// <typeparam name="TDto">The DTO type</typeparam>
+    /// <typeparam name="TPk">The primary key type</typeparam>
     public class Dao<TEntity, TDto, TPk> : IDao<TDto, TPk>
     where TEntity : class
     where TPk : struct
@@ -30,6 +36,12 @@ namespace NosCore.Dao
         private readonly Func<DbContext> _dbContextBuilder;
         private readonly ReadOnlyDictionary<Type, Type> _tphEntityToDtoDictionary;
         private readonly ReadOnlyDictionary<Type, Type> _tphDtoToEntityDictionary;
+
+        /// <summary>
+        /// Initializes a new instance of the Dao class.
+        /// </summary>
+        /// <param name="logger">The logger instance</param>
+        /// <param name="dbContextBuilder">The database context factory</param>
         public Dao(ILogger logger, Func<DbContext> dbContextBuilder)
         {
             var dtos = InterfaceHelper.GetAllTypesOf<TDto>().ToList();
@@ -52,6 +64,7 @@ namespace NosCore.Dao
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }
 
+        /// <inheritdoc />
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
         {
             try
@@ -81,6 +94,7 @@ namespace NosCore.Dao
             }
         }
 
+        /// <inheritdoc />
         public async Task<bool> TryInsertOrUpdateAsync(IEnumerable<TDto> dtos)
         {
             try
@@ -124,6 +138,7 @@ namespace NosCore.Dao
             }
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys)
         {
             try
@@ -144,6 +159,7 @@ namespace NosCore.Dao
             }
         }
 
+        /// <inheritdoc />
         public async Task<TDto> TryDeleteAsync(TPk dtokey)
         {
             try
@@ -174,6 +190,7 @@ namespace NosCore.Dao
             }
         }
 
+        /// <inheritdoc />
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
             var context = _dbContextBuilder();
@@ -181,12 +198,14 @@ namespace NosCore.Dao
             return ent == null ? default! : ToDto(ent);
         }
 
+        /// <inheritdoc />
         public IEnumerable<TDto> LoadAll()
         {
             var context = _dbContextBuilder();
             return context.Set<TEntity>().ToList().Select(ToDto);
         }
 
+        /// <inheritdoc />
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
             var context = _dbContextBuilder();
