@@ -45,9 +45,9 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleWithFkDto { Key = 8, Value = "test", Fk = 1 };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -59,9 +59,9 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleWithFkDto { Key = 8, Value = "blabla", Fk = 1 };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -75,11 +75,11 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.AreEqual(2, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -97,11 +97,11 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.AreEqual(2, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -113,11 +113,11 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "thisisatest");
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.AreEqual(2, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("thisisatest", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -126,12 +126,12 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleWithFkDto { Key = 0, Value = "test", Fk = 1 };
             var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 1);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(1, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
 
-            Assert.IsTrue(result.Key == 1);
-            Assert.IsTrue(result.Value == "test");
+            Assert.AreEqual(1, result.Key);
+            Assert.AreEqual("test", result.Value);
         }
 
         [TestMethod]
@@ -143,9 +143,9 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted.Key == 8);
-            Assert.IsTrue(deleted.Value == "test");
+            Assert.AreEqual(0, loadAll.Count);
+            Assert.AreEqual(8, deleted.Key);
+            Assert.AreEqual("test", deleted.Value);
         }
 
         [TestMethod]
@@ -157,7 +157,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
+            Assert.AreEqual(1, loadAll.Count);
             Assert.IsNull(deleted);
         }
 
@@ -170,8 +170,8 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false);
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted!.Count() == 2);
+            Assert.AreEqual(0, loadAll.Count);
+            Assert.AreEqual(2, deleted!.Count());
         }
 
         [TestMethod]
@@ -183,11 +183,11 @@ namespace NosCore.Dao.Tests
 
             var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder().Set<SimpleWithFkEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
+            Assert.AreEqual(0, loadAll.Count);
             Assert.IsNotNull(deleted);
-            Assert.IsTrue(deleted.Count() == 1);
-            Assert.IsTrue(deleted.First().Key == 8);
-            Assert.IsTrue(deleted.First().Value == "test");
+            Assert.AreEqual(1, deleted.Count());
+            Assert.AreEqual(8, deleted.First().Key);
+            Assert.AreEqual("test", deleted.First().Value);
         }
 
         [TestMethod]
@@ -199,9 +199,9 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.Where(s => s.Key == 9).ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 9);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(9, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -214,8 +214,8 @@ namespace NosCore.Dao.Tests
 
             var dto = await _dao.FirstOrDefaultAsync(s => s.Key == 9).ConfigureAwait(false);
             Assert.IsNotNull(dto);
-            Assert.IsTrue(dto.Key == 9);
-            Assert.IsTrue(dto.Value == "test");
+            Assert.AreEqual(9, dto.Key);
+            Assert.AreEqual("test", dto.Value);
         }
 
         [TestMethod]

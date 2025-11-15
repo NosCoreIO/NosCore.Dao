@@ -36,9 +36,9 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 8, Value = "test" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -50,9 +50,9 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 8, Value = "blabla" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -66,11 +66,11 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.AreEqual(2, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -88,11 +88,11 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.AreEqual(2, loadAll.Count);
+            Assert.AreEqual(8, loadAll.First().Key);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -101,12 +101,12 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 0, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 1);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.AreEqual(1, loadAll.Count);
+            Assert.AreEqual(1, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
 
-            Assert.IsTrue(result.Key == 1);
-            Assert.IsTrue(result.Value == "test");
+            Assert.AreEqual(1, result.Key);
+            Assert.AreEqual("test", result.Value);
         }
     }
 }
