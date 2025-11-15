@@ -7,10 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Loader;
-using Microsoft.Extensions.DependencyModel;
-using Serilog.Context;
 
 namespace NosCore.Dao.Extensions
 {
@@ -26,9 +23,25 @@ namespace NosCore.Dao.Extensions
         /// <returns>An enumerable of all matching types</returns>
         public static IEnumerable<Type> GetAllTypesOf<T>()
         {
-            return AssemblyLoadContext.All.SelectMany(x=>x.Assemblies)
-                .SelectMany(x=>x.ExportedTypes)
-                .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface) ?? [];
+            var result = new List<Type>();
+
+            foreach (var context in AssemblyLoadContext.All)
+            {
+                foreach (var assembly in context.Assemblies)
+                {
+                    try
+                    {
+                        result.AddRange(assembly.ExportedTypes
+                            .Where(t => typeof(T).IsAssignableFrom(t) && !t.IsInterface));
+                    }
+                    catch
+                    {
+                        // Some assemblies may fail to load types, skip them
+                    }
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
