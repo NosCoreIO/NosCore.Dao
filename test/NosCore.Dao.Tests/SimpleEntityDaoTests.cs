@@ -36,7 +36,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleDto { Key = 8, Value = "test" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
         }
@@ -50,7 +50,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleDto { Key = 8, Value = "blabla" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
         }
@@ -66,7 +66,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.HasCount(loadAll, 2);
+            Assert.HasCount(2, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
             Assert.AreEqual(9, loadAll.Skip(1).First().Key);
@@ -88,7 +88,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.HasCount(loadAll, 2);
+            Assert.HasCount(2, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
             Assert.AreEqual(9, loadAll.Skip(1).First().Key);
@@ -104,7 +104,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().ToList();
-            Assert.HasCount(loadAll, 2);
+            Assert.HasCount(2, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("thisisatest", loadAll.First().Value);
             Assert.AreEqual(9, loadAll.Skip(1).First().Key);
@@ -117,7 +117,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleDto { Key = 0, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(1, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
 
@@ -134,7 +134,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 0);
+            Assert.HasCount(0, loadAll);
             Assert.AreEqual(8, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
         }
@@ -148,7 +148,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.IsNull(deleted);
         }
 
@@ -161,7 +161,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 0);
+            Assert.HasCount(0, loadAll);
             Assert.AreEqual(2, deleted!.Count());
         }
 
@@ -174,7 +174,7 @@ namespace NosCore.Dao.Tests
 
             var deleted = (await _dao.TryDeleteAsync(new[] { 9, 8 }).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 0);
+            Assert.HasCount(0, loadAll);
             Assert.IsNotNull(deleted);
             Assert.AreEqual(1, deleted.Count());
             Assert.AreEqual(8, deleted.First().Key);
@@ -190,7 +190,7 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.Where(s => s.Key == 9).ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(9, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
         }

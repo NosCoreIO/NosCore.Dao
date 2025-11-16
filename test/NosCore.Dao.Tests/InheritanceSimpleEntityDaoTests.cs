@@ -36,7 +36,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 8, Value = "test" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
         }
@@ -50,7 +50,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 8, Value = "blabla" };
             await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
         }
@@ -66,7 +66,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.HasCount(loadAll, 2);
+            Assert.HasCount(2, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
             Assert.AreEqual(9, loadAll.Skip(1).First().Key);
@@ -88,7 +88,7 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().OrderBy(s => s.Key).ToList();
-            Assert.HasCount(loadAll, 2);
+            Assert.HasCount(2, loadAll);
             Assert.AreEqual(8, loadAll.First().Key);
             Assert.AreEqual("blabla", loadAll.First().Value);
             Assert.AreEqual(9, loadAll.Skip(1).First().Key);
@@ -101,7 +101,7 @@ namespace NosCore.Dao.Tests
             var simpleDto = new SimpleObject { Key = 0, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
-            Assert.HasCount(loadAll, 1);
+            Assert.HasCount(1, loadAll);
             Assert.AreEqual(1, loadAll.First().Key);
             Assert.AreEqual("test", loadAll.First().Value);
 
