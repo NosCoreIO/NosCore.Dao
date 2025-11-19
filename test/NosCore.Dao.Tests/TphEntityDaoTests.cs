@@ -35,28 +35,28 @@ namespace NosCore.Dao.Tests
             var baseDto = new TphBaseDto() { Key = 7, Value = "test" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test");
-            Assert.IsTrue(result is TphBaseDto);
+            Assert.HasCount(1, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
+            Assert.IsInstanceOfType(result, typeof(TphBaseDto));
 
             var tph1Dto = new Tph1Dto() { Key = 8, Value = "test", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
-            Assert.IsTrue(result is Tph1Dto);
-            Assert.IsTrue((result as Tph1Dto)!.SpecificPropertyTph1 == 1);
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(result, typeof(Tph1Dto));
+            Assert.AreEqual(1, (result as Tph1Dto)!.SpecificPropertyTph1);
 
             var tph2Dto = new Tph2Dto() { Key = 9, Value = "test", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(2).First().Value == "test");
-            Assert.IsTrue(result is Tph2Dto);
-            Assert.IsTrue((result as Tph2Dto)!.SpecificPropertyTph2 == 2);
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(9, loadAll.Skip(2).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(2).First().Value);
+            Assert.IsInstanceOfType(result, typeof(Tph2Dto));
+            Assert.AreEqual(2, (result as Tph2Dto)!.SpecificPropertyTph2);
         }
 
         [TestMethod]
@@ -71,28 +71,28 @@ namespace NosCore.Dao.Tests
             var baseDto = new TphBaseDto() { Key = 7, Value = "test1" };
             var result = await _dao.TryInsertOrUpdateAsync(baseDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test1");
-            Assert.IsTrue(result is TphBaseDto);
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test1", loadAll.First().Value);
+            Assert.IsInstanceOfType(result, typeof(TphBaseDto));
 
             var tph1Dto = new Tph1Dto() { Key = 8, Value = "test2", SpecificPropertyTph1 = 1 };
             result = await _dao.TryInsertOrUpdateAsync(tph1Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test2");
-            Assert.IsTrue(result is Tph1Dto);
-            Assert.IsTrue((result as Tph1Dto)!.SpecificPropertyTph1 == 1);
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test2", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(result, typeof(Tph1Dto));
+            Assert.AreEqual(1, (result as Tph1Dto)!.SpecificPropertyTph1);
 
             var tph2Dto = new Tph2Dto() { Key = 9, Value = "test3", SpecificPropertyTph2 = 2 };
             result = await _dao.TryInsertOrUpdateAsync(tph2Dto).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(2).First().Value == "test3");
-            Assert.IsTrue(result is Tph2Dto);
-            Assert.IsTrue((result as Tph2Dto)!.SpecificPropertyTph2 == 2);
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(9, loadAll.Skip(2).First().Key);
+            Assert.AreEqual("test3", loadAll.Skip(2).First().Value);
+            Assert.IsInstanceOfType(result, typeof(Tph2Dto));
+            Assert.AreEqual(2, (result as Tph2Dto)!.SpecificPropertyTph2);
         }
 
         [TestMethod]
@@ -107,20 +107,20 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test1");
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test1", loadAll.First().Value);
             Assert.IsFalse(loadAll.First() is Tph1Entity || loadAll.First() is Tph2Entity);
 
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test2");
-            Assert.IsTrue(loadAll.Skip(1).First() is Tph1Entity);
-            Assert.IsTrue((loadAll.Skip(1).First() as Tph1Entity)?.SpecificPropertyTph1 == 1);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test2", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(1).First(), typeof(Tph1Entity));
+            Assert.AreEqual(1, (loadAll.Skip(1).First() as Tph1Entity)?.SpecificPropertyTph1);
 
-            Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(2).First().Value == "test3");
-            Assert.IsTrue(loadAll.Skip(2).First() is Tph2Entity);
-            Assert.IsTrue((loadAll.Skip(2).First() as Tph2Entity)?.SpecificPropertyTph2 == 2);
+            Assert.AreEqual(9, loadAll.Skip(2).First().Key);
+            Assert.AreEqual("test3", loadAll.Skip(2).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(2).First(), typeof(Tph2Entity));
+            Assert.AreEqual(2, (loadAll.Skip(2).First() as Tph2Entity)?.SpecificPropertyTph2);
 
         }
 
@@ -142,20 +142,20 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().OrderBy(s => s.Key).ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test1");
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test1", loadAll.First().Value);
             Assert.IsFalse(loadAll.First() is Tph1Entity || loadAll.First() is Tph2Entity);
 
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test2");
-            Assert.IsTrue(loadAll.Skip(1).First() is Tph1Entity);
-            Assert.IsTrue((loadAll.Skip(1).First() as Tph1Entity)?.SpecificPropertyTph1 == 1);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test2", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(1).First(), typeof(Tph1Entity));
+            Assert.AreEqual(1, (loadAll.Skip(1).First() as Tph1Entity)?.SpecificPropertyTph1);
 
-            Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(2).First().Value == "test3");
-            Assert.IsTrue(loadAll.Skip(2).First() is Tph2Entity);
-            Assert.IsTrue((loadAll.Skip(2).First() as Tph2Entity)?.SpecificPropertyTph2 == 2);
+            Assert.AreEqual(9, loadAll.Skip(2).First().Key);
+            Assert.AreEqual("test3", loadAll.Skip(2).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(2).First(), typeof(Tph2Entity));
+            Assert.AreEqual(2, (loadAll.Skip(2).First() as Tph2Entity)?.SpecificPropertyTph2);
         }
 
         [TestMethod]
@@ -169,26 +169,26 @@ namespace NosCore.Dao.Tests
 
             var deleted = await _dao.TryDeleteAsync(7).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(deleted.Key == 7);
-            Assert.IsTrue(deleted.Value == "test");
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(7, deleted.Key);
+            Assert.AreEqual("test", deleted.Value);
             Assert.IsFalse(deleted is Tph2Dto || deleted is Tph1Dto);
 
             deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(deleted.Key == 8);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is Tph1Dto);
-            Assert.IsTrue((deleted as Tph1Dto)!.SpecificPropertyTph1 == 1);
+            Assert.HasCount(1, loadAll);
+            Assert.AreEqual(8, deleted.Key);
+            Assert.AreEqual("test", deleted.Value);
+            Assert.IsInstanceOfType(deleted, typeof(Tph1Dto));
+            Assert.AreEqual(1, (deleted as Tph1Dto)!.SpecificPropertyTph1);
 
             deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted.Key == 9);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is Tph2Dto);
-            Assert.IsTrue((deleted as Tph2Dto)!.SpecificPropertyTph2 == 2);
+            Assert.HasCount(0, loadAll);
+            Assert.AreEqual(9, deleted.Key);
+            Assert.AreEqual("test", deleted.Value);
+            Assert.IsInstanceOfType(deleted, typeof(Tph2Dto));
+            Assert.AreEqual(2, (deleted as Tph2Dto)!.SpecificPropertyTph2);
         }
 
         [TestMethod]
@@ -202,22 +202,22 @@ namespace NosCore.Dao.Tests
 
             var deletedEntities = (await _dao.TryDeleteAsync(new[] { 7, 9, 8 }).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>()!.ToList();
-            Assert.IsTrue(deletedEntities.Count() == 3);
-            Assert.IsTrue(!loadAll.Any());
+            Assert.AreEqual(3, deletedEntities.Count());
+            Assert.IsFalse(loadAll.Any());
 
             var deleted = deletedEntities.First(s => s.Key == 7);
-            Assert.IsTrue(deleted.Value == "test");
+            Assert.AreEqual("test", deleted.Value);
             Assert.IsFalse(deleted is Tph2Dto || deleted is Tph1Dto);
 
             deleted = deletedEntities.First(s => s.Key == 8);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is Tph1Dto);
-            Assert.IsTrue((deleted as Tph1Dto)!.SpecificPropertyTph1 == 1);
+            Assert.AreEqual("test", deleted.Value);
+            Assert.IsInstanceOfType(deleted, typeof(Tph1Dto));
+            Assert.AreEqual(1, (deleted as Tph1Dto)!.SpecificPropertyTph1);
 
             deleted = deletedEntities.First(s => s.Key == 9);
-            Assert.IsTrue(deleted.Value == "test");
-            Assert.IsTrue(deleted is Tph2Dto);
-            Assert.IsTrue((deleted as Tph2Dto)!.SpecificPropertyTph2 == 2);
+            Assert.AreEqual("test", deleted.Value);
+            Assert.IsInstanceOfType(deleted, typeof(Tph2Dto));
+            Assert.AreEqual(2, (deleted as Tph2Dto)!.SpecificPropertyTph2);
         }
 
         [TestMethod]
@@ -230,17 +230,17 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().ToList();
-            Assert.IsTrue(loadAll.Count == 3);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.HasCount(3, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
 
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
-            Assert.IsTrue(loadAll.Skip(1).First() is Tph1Dto);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(1).First(), typeof(Tph1Dto));
 
-            Assert.IsTrue(loadAll.Skip(2).First().Key == 9);
-            Assert.IsTrue(loadAll.Skip(2).First().Value == "test");
-            Assert.IsTrue(loadAll.Skip(2).First() is Tph2Dto);
+            Assert.AreEqual(9, loadAll.Skip(2).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(2).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(2).First(), typeof(Tph2Dto));
         }
 
         [TestMethod]
@@ -253,14 +253,14 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.Where(s=>s.Key == 7 || s.Key == 8).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key == 7);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(7, loadAll.First().Key);
+            Assert.AreEqual("test", loadAll.First().Value);
 
-            Assert.IsTrue(loadAll.Skip(1).First().Key == 8);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
-            Assert.IsTrue(loadAll.Skip(1).First() is Tph1Dto);
-            Assert.IsTrue((loadAll.Skip(1).First() as Tph1Dto)?.SpecificPropertyTph1 == 1);
+            Assert.AreEqual(8, loadAll.Skip(1).First().Key);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
+            Assert.IsInstanceOfType(loadAll.Skip(1).First(), typeof(Tph1Dto));
+            Assert.AreEqual(1, (loadAll.Skip(1).First() as Tph1Dto)?.SpecificPropertyTph1);
         }
 
         [TestMethod]
@@ -274,10 +274,10 @@ namespace NosCore.Dao.Tests
 
             var dto = await _dao.FirstOrDefaultAsync(s => s.Key == 9).ConfigureAwait(false);
             Assert.IsNotNull(dto);
-            Assert.IsTrue(dto.Key == 9);
-            Assert.IsTrue(dto.Value == "test");
-            Assert.IsTrue(dto is Tph2Dto);
-            Assert.IsTrue((dto as Tph2Dto)?.SpecificPropertyTph2 == 2);
+            Assert.AreEqual(9, dto.Key);
+            Assert.AreEqual("test", dto.Value);
+            Assert.IsInstanceOfType(dto, typeof(Tph2Dto));
+            Assert.AreEqual(2, (dto as Tph2Dto)?.SpecificPropertyTph2);
         }
     }
 }

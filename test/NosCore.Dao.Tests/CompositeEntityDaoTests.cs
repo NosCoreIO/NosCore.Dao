@@ -36,10 +36,10 @@ namespace NosCore.Dao.Tests
             var compositeDto = new CompositeDto { Key1 = 8, Key2 = 8, Value = "test" };
             await _dao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key1 == 8);
-            Assert.IsTrue(loadAll.First().Key2 == 8);
-            Assert.IsTrue(loadAll.First().Value == "test");
+            Assert.HasCount(1, loadAll);
+            Assert.AreEqual(8, loadAll.First().Key1);
+            Assert.AreEqual(8, loadAll.First().Key2);
+            Assert.AreEqual("test", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -52,10 +52,10 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(compositeDto).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
-            Assert.IsTrue(loadAll.First().Key1 == 8);
-            Assert.IsTrue(loadAll.First().Key2 == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
+            Assert.HasCount(1, loadAll);
+            Assert.AreEqual(8, loadAll.First().Key1);
+            Assert.AreEqual(8, loadAll.First().Key2);
+            Assert.AreEqual("blabla", loadAll.First().Value);
         }
 
         [TestMethod]
@@ -69,13 +69,13 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().OrderBy(s => s.Key1).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key1 == 8);
-            Assert.IsTrue(loadAll.First().Key2 == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key1 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Key2 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(8, loadAll.First().Key1);
+            Assert.AreEqual(8, loadAll.First().Key2);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key1);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key2);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -93,13 +93,13 @@ namespace NosCore.Dao.Tests
 
             await _dao.TryInsertOrUpdateAsync(compositeDtos).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().OrderBy(s => s.Key1).ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key1 == 8);
-            Assert.IsTrue(loadAll.First().Key2 == 8);
-            Assert.IsTrue(loadAll.First().Value == "blabla");
-            Assert.IsTrue(loadAll.Skip(1).First().Key1 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Key2 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(8, loadAll.First().Key1);
+            Assert.AreEqual(8, loadAll.First().Key2);
+            Assert.AreEqual("blabla", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key1);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key2);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -111,13 +111,13 @@ namespace NosCore.Dao.Tests
             await otherContext.SaveChangesAsync().ConfigureAwait(false);
 
             var loadAll = _dao.LoadAll().ToList();
-            Assert.IsTrue(loadAll.Count == 2);
-            Assert.IsTrue(loadAll.First().Key1 == 8);
-            Assert.IsTrue(loadAll.First().Key2 == 8);
-            Assert.IsTrue(loadAll.First().Value == "thisisatest");
-            Assert.IsTrue(loadAll.Skip(1).First().Key1 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Key2 == 9);
-            Assert.IsTrue(loadAll.Skip(1).First().Value == "test");
+            Assert.HasCount(2, loadAll);
+            Assert.AreEqual(8, loadAll.First().Key1);
+            Assert.AreEqual(8, loadAll.First().Key2);
+            Assert.AreEqual("thisisatest", loadAll.First().Value);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key1);
+            Assert.AreEqual(9, loadAll.Skip(1).First().Key2);
+            Assert.AreEqual("test", loadAll.Skip(1).First().Value);
         }
 
         [TestMethod]
@@ -130,10 +130,10 @@ namespace NosCore.Dao.Tests
             var id = (8, 9);
             var deleted = await _dao.TryDeleteAsync(id).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted.Key1 == 8);
-            Assert.IsTrue(deleted.Key2 == 9);
-            Assert.IsTrue(deleted.Value == "test");
+            Assert.HasCount(0, loadAll);
+            Assert.AreEqual(8, deleted.Key1);
+            Assert.AreEqual(9, deleted.Key2);
+            Assert.AreEqual("test", deleted.Value);
         }
 
         [TestMethod]
@@ -145,7 +145,7 @@ namespace NosCore.Dao.Tests
             var id = (9, 9);
             var deleted = await _dao.TryDeleteAsync(id).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 1);
+            Assert.HasCount(1, loadAll);
             Assert.IsNull(deleted);
         }
 
@@ -158,8 +158,8 @@ namespace NosCore.Dao.Tests
             var ids = new List<(int, int)> { (9, 9), (8, 8) };
             var deleted = await _dao.TryDeleteAsync(ids).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>()!.ToList();
-            Assert.IsTrue(loadAll.Count == 0);
-            Assert.IsTrue(deleted!.Count() == 2);
+            Assert.HasCount(0, loadAll);
+            Assert.AreEqual(2, deleted!.Count());
         }
 
         [TestMethod]
@@ -171,12 +171,12 @@ namespace NosCore.Dao.Tests
             var ids = new List<(int, int)> { (9, 9), (8, 8) };
             var deleted = (await _dao.TryDeleteAsync(ids).ConfigureAwait(false))!.ToList();
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
-            Assert.IsTrue(loadAll.Count == 0);
+            Assert.HasCount(0, loadAll);
             Assert.IsNotNull(deleted);
-            Assert.IsTrue(deleted.Count() == 1);
-            Assert.IsTrue(deleted.First().Key1 == 8);
-            Assert.IsTrue(deleted.First().Key2 == 8);
-            Assert.IsTrue(deleted.First().Value == "test");
+            Assert.AreEqual(1, deleted.Count());
+            Assert.AreEqual(8, deleted.First().Key1);
+            Assert.AreEqual(8, deleted.First().Key2);
+            Assert.AreEqual("test", deleted.First().Value);
         }
     }
 }

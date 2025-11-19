@@ -14,8 +14,17 @@ using System.Runtime.CompilerServices;
 
 namespace NosCore.Dao.Extensions
 {
+    /// <summary>
+    /// Extension methods for DbSet to support finding entities by multiple keys.
+    /// </summary>
     public static class DbContextFindAllExtensions
     {
+        /// <summary>
+        /// Converts an enumerable of values into a tuple.
+        /// </summary>
+        /// <typeparam name="T">The type of values</typeparam>
+        /// <param name="values">The values to convert</param>
+        /// <returns>A tuple containing all the values</returns>
         public static ITuple GetTuple<T>(this IEnumerable<T> values)
         {
             var enumerable = values.ToArray();
@@ -26,6 +35,15 @@ namespace NosCore.Dao.Extensions
             return (ITuple)Activator.CreateInstance(specificType, constructorArguments)!;
         }
 
+        /// <summary>
+        /// Finds all entities matching any of the provided key values.
+        /// </summary>
+        /// <typeparam name="T">The entity type</typeparam>
+        /// <typeparam name="TKey">The key type</typeparam>
+        /// <param name="dbSet">The database set</param>
+        /// <param name="keyProperty">The key properties</param>
+        /// <param name="keyValues">The key values to search for</param>
+        /// <returns>A queryable of matching entities</returns>
         public static IQueryable<T> FindAll<T, TKey>(this DbSet<T> dbSet, PropertyInfo[] keyProperty,
             params TKey[] keyValues)
         where T : class
