@@ -44,7 +44,13 @@ namespace NosCore.Dao
         /// <param name="dbContextBuilder">The database context factory</param>
         public Dao(ILogger logger, Func<DbContext> dbContextBuilder)
         {
-            var dtos = InterfaceHelper.GetAllTypesOf<TDto>().ToList();
+            // The DTO list is filtered to actual DTO classes (suffix "Dto") — otherwise
+            // downstream subclasses of a DTO (e.g. a runtime wrapper `WearableInstance :
+            // WearableInstanceDto`) also satisfy TrimEnd("Dto") == entity name and can be
+            // picked first, breaking later lookups keyed by the real DTO type.
+            var dtos = InterfaceHelper.GetAllTypesOf<TDto>()
+                .Where(s => s.Name.EndsWith("Dto"))
+                .ToList();
             _tphEntityToDtoDictionary = new ReadOnlyDictionary<Type, Type>(typeof(TDto).IsInterface ?
                 InterfaceHelper.GetAllTypesOf<TEntity>().ToDictionary(
                     entity => entity,
