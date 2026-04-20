@@ -76,7 +76,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("", e);
+                _logger.Error(e, "TryInsertOrUpdateAsync<{Entity}> failed", typeof(TEntity).Name);
                 return default!;
             }
         }
@@ -119,7 +119,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("", e);
+                _logger.Error(e, "TryInsertOrUpdateAsync<{Entity}> batch failed", typeof(TEntity).Name);
                 return false;
             }
         }
@@ -139,7 +139,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error("", e);
+                _logger.Error(e, "TryDeleteAsync<{Entity}> batch failed", typeof(TEntity).Name);
                 return null;
             }
         }
@@ -169,7 +169,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error(e.Message, e);
+                _logger.Error(e, "TryDeleteAsync<{Entity}> failed", typeof(TEntity).Name);
                 return default!;
             }
         }
