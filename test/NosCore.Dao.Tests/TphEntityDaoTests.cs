@@ -12,7 +12,7 @@ using Moq;
 using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.Database.Entities.TphEntities;
 using NosCore.Dao.Tests.TestsModels.TphModels;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace NosCore.Dao.Tests
 {
@@ -26,7 +26,7 @@ namespace NosCore.Dao.Tests
         public void Setup()
         {
             _dbContextBuilder = new DbContextBuilder();
-            _dao = new Dao<TphBaseEntity, ITphDto, int>(new Mock<ILogger>().Object, _dbContextBuilder.CreateContext);
+            _dao = new Dao<TphBaseEntity, ITphDto, int>(new Mock<ILogger<Dao<TphBaseEntity, ITphDto, int>>>().Object, _dbContextBuilder.CreateContext);
         }
 
         [TestMethod]

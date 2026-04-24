@@ -14,7 +14,7 @@ using Moq;
 using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.Database.Entities.SimpleEntities;
 using NosCore.Dao.Tests.TestsModels.SimpleModels;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace NosCore.Dao.Tests
 {
@@ -36,7 +36,7 @@ namespace NosCore.Dao.Tests
             });
             await init.SaveChangesAsync().ConfigureAwait(false);
             _dao =
-                new Dao<SimpleWithFkEntity, SimpleWithFkDto, int>(new Mock<ILogger>().Object, _dbContextBuilder);
+                new Dao<SimpleWithFkEntity, SimpleWithFkDto, int>(new Mock<ILogger<Dao<SimpleWithFkEntity, SimpleWithFkDto, int>>>().Object, _dbContextBuilder);
         }
 
         [TestMethod]
