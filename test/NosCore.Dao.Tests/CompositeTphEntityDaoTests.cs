@@ -13,7 +13,7 @@ using NosCore.Dao.Tests.Database;
 using NosCore.Dao.Tests.Database.Entities.CompositeEntities;
 using NosCore.Dao.Tests.Database.Entities.CompositeTphEntities;
 using NosCore.Dao.Tests.TestsModels.CompositeTphModels;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace NosCore.Dao.Tests
 {
@@ -27,7 +27,7 @@ namespace NosCore.Dao.Tests
         public void Setup()
         {
             _dbContextBuilder = new DbContextBuilder();
-            _dao = new Dao<CompositeTphBaseEntity, ICompositeTphDto, (int, int)>(new Mock<ILogger>().Object, _dbContextBuilder.CreateContext);
+            _dao = new Dao<CompositeTphBaseEntity, ICompositeTphDto, (int, int)>(new Mock<ILogger<Dao<CompositeTphBaseEntity, ICompositeTphDto, (int, int)>>>().Object, _dbContextBuilder.CreateContext);
         }
 
         [TestMethod]

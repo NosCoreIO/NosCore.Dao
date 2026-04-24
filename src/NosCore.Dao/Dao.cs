@@ -15,9 +15,9 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NosCore.Dao.Extensions;
 using NosCore.Dao.Interfaces;
-using Serilog;
 
 namespace NosCore.Dao
 {
@@ -31,7 +31,7 @@ namespace NosCore.Dao
     where TEntity : class
     where TPk : struct
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<Dao<TEntity, TDto, TPk>> _logger;
         private readonly PropertyInfo[] _primaryKey;
         private readonly Func<DbContext> _dbContextBuilder;
         private readonly ReadOnlyDictionary<Type, Type> _tphEntityToDtoDictionary;
@@ -42,7 +42,7 @@ namespace NosCore.Dao
         /// </summary>
         /// <param name="logger">The logger instance</param>
         /// <param name="dbContextBuilder">The database context factory</param>
-        public Dao(ILogger logger, Func<DbContext> dbContextBuilder)
+        public Dao(ILogger<Dao<TEntity, TDto, TPk>> logger, Func<DbContext> dbContextBuilder)
         {
             // The DTO list is filtered to actual DTO classes (suffix "Dto") — otherwise
             // downstream subclasses of a DTO (e.g. a runtime wrapper `WearableInstance :
@@ -95,7 +95,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error(e, "TryInsertOrUpdateAsync<{Entity}> failed", typeof(TEntity).Name);
+                _logger.LogError(e, "TryInsertOrUpdateAsync<{Entity}> failed", typeof(TEntity).Name);
                 return default!;
             }
         }
@@ -139,7 +139,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error(e, "TryInsertOrUpdateAsync<{Entity}> batch failed", typeof(TEntity).Name);
+                _logger.LogError(e, "TryInsertOrUpdateAsync<{Entity}> batch failed", typeof(TEntity).Name);
                 return false;
             }
         }
@@ -160,7 +160,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error(e, "TryDeleteAsync<{Entity}> batch failed", typeof(TEntity).Name);
+                _logger.LogError(e, "TryDeleteAsync<{Entity}> batch failed", typeof(TEntity).Name);
                 return null;
             }
         }
@@ -191,7 +191,7 @@ namespace NosCore.Dao
             }
             catch (Exception e)
             {
-                _logger.Error(e, "TryDeleteAsync<{Entity}> failed", typeof(TEntity).Name);
+                _logger.LogError(e, "TryDeleteAsync<{Entity}> failed", typeof(TEntity).Name);
                 return default!;
             }
         }

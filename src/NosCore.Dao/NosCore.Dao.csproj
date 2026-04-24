@@ -12,7 +12,7 @@
     <RepositoryUrl>https://github.com/NosCoreIO/NosCore.Dao.git</RepositoryUrl>
     <PackageIconUrl></PackageIconUrl>
     <PackageTags>nostale, noscore, nostale private server source, nostale emulator</PackageTags>
-    <Version>4.0.5</Version>
+    <Version>5.0.0</Version>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>NosCore's Dao</Description>
     <PackageLicenseExpression></PackageLicenseExpression>
@@ -33,7 +33,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.6" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.6" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
