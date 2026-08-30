@@ -87,6 +87,38 @@ namespace NosCore.Dao.Tests
         }
 
         [TestMethod]
+        public async Task ParallelChildTasksInsideOneScopeAreSerialized()
+        {
+            await using (var transaction = _scope.Begin())
+            {
+                await Task.WhenAll(
+                    Task.Run(() => _dao.TryInsertOrUpdateAsync(new SimpleDto { Key = 1, Value = "first" })),
+                    Task.Run(() => _dao.TryInsertOrUpdateAsync(new SimpleDto { Key = 2, Value = "second" }))).ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+
+            var loadAll = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList();
+            Assert.HasCount(2, loadAll);
+        }
+
+        [TestMethod]
+        public async Task NestedScopesAreRejectedButSequentialScopesWork()
+        {
+            await using (_scope.Begin())
+            {
+                Assert.Throws<System.InvalidOperationException>(() => _scope.Begin());
+            }
+
+            await using (var transaction = _scope.Begin())
+            {
+                await _dao.TryInsertOrUpdateAsync(new SimpleDto { Key = 5, Value = "second scope" }).ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+
+            Assert.HasCount(1, _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToList());
+        }
+
+        [TestMethod]
         public async Task ConcurrentFlowsDoNotShareAScope()
         {
             var second = new DbContextBuilder();

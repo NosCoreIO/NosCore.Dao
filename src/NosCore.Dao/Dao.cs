@@ -70,6 +70,8 @@ namespace NosCore.Dao
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }
 
+        // Lazy sync queries (LoadAll/Where) resolve without the scope lock - their
+        // enumeration outlives any lock we could take here.
         private DbContext ResolveContext()
         {
             return AmbientDbContext.Current ?? _dbContextBuilder();
@@ -81,7 +83,8 @@ namespace NosCore.Dao
             try
             {
                 var entity = ToEntity(dto);
-                var context = ResolveContext();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
@@ -111,7 +114,8 @@ namespace NosCore.Dao
             try
             {
                 var enumerable = dtos.ToList();
-                var context = ResolveContext();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
@@ -154,7 +158,8 @@ namespace NosCore.Dao
         {
             try
             {
-                var context = ResolveContext();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
@@ -176,7 +181,8 @@ namespace NosCore.Dao
             try
             {
                 TDto deletedDto = default!;
-                var context = ResolveContext();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var key = dtokey is ITuple keyArray ? keyArray
                     .GetType()
@@ -204,7 +210,8 @@ namespace NosCore.Dao
         /// <inheritdoc />
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
-            var context = ResolveContext();
+            using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+            var context = lease.Context;
             var ent = await context.Set<TEntity>().FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
             return ent == null ? default! : ToDto(ent);
         }
