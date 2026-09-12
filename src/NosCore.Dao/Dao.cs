@@ -61,7 +61,7 @@ namespace NosCore.Dao
             _tphDtoToEntityDictionary = new ReadOnlyDictionary<Type, Type>(_tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key));
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            var context = _dbContextBuilder();
+            var context = ResolveContext();
             var key = typeof(TDto).GetProperties()
                 .Where(s => context.Model.FindEntityType(typeof(TEntity))?
                     .FindPrimaryKey()?.Properties.Select(x => x.Name)
@@ -70,13 +70,21 @@ namespace NosCore.Dao
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
         }
 
+        // Lazy sync queries (LoadAll/Where) resolve without the scope lock - their
+        // enumeration outlives any lock we could take here.
+        private DbContext ResolveContext()
+        {
+            return AmbientDbContext.Current ?? _dbContextBuilder();
+        }
+
         /// <inheritdoc />
         public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
         {
             try
             {
                 var entity = ToEntity(dto);
-                var context = _dbContextBuilder();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
@@ -106,7 +114,8 @@ namespace NosCore.Dao
             try
             {
                 var enumerable = dtos.ToList();
-                var context = _dbContextBuilder();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
 
                 var dbset = context.Set<TEntity>();
                 var entitytoadd = new List<TEntity>();
@@ -149,7 +158,8 @@ namespace NosCore.Dao
         {
             try
             {
-                var context = _dbContextBuilder();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
                 var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
@@ -171,7 +181,8 @@ namespace NosCore.Dao
             try
             {
                 TDto deletedDto = default!;
-                var context = _dbContextBuilder();
+                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var key = dtokey is ITuple keyArray ? keyArray
                     .GetType()
@@ -199,7 +210,8 @@ namespace NosCore.Dao
         /// <inheritdoc />
         public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
-            var context = _dbContextBuilder();
+            using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
+            var context = lease.Context;
             var ent = await context.Set<TEntity>().FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
             return ent == null ? default! : ToDto(ent);
         }
@@ -207,14 +219,14 @@ namespace NosCore.Dao
         /// <inheritdoc />
         public IEnumerable<TDto> LoadAll()
         {
-            var context = _dbContextBuilder();
+            var context = ResolveContext();
             return context.Set<TEntity>().ToList().Select(ToDto);
         }
 
         /// <inheritdoc />
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
-            var context = _dbContextBuilder();
+            var context = ResolveContext();
             var entities = context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
             return entities.ToList().Select(ToDto);
         }
