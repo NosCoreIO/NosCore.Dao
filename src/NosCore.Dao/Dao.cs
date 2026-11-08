@@ -1,4 +1,4 @@
-﻿//  __  _  __    __   ___ __  ___ ___
+//  __  _  __    __   ___ __  ___ ___
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
@@ -61,32 +61,68 @@ namespace NosCore.Dao
             _tphDtoToEntityDictionary = new ReadOnlyDictionary<Type, Type>(_tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key));
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            var context = ResolveContext();
-            var key = typeof(TDto).GetProperties()
-                .Where(s => context.Model.FindEntityType(typeof(TEntity))?
-                    .FindPrimaryKey()?.Properties.Select(x => x.Name)
-                    .Contains(s.Name) ?? false
-                ).ToArray();
-            _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
+            using (var lease = AmbientDbContext.LeaseSync(_dbContextBuilder))
+            {
+                var keyNames = lease.Context.Model.FindEntityType(typeof(TEntity))?
+                    .FindPrimaryKey()?.Properties.Select(x => x.Name).ToHashSet();
+                var key = typeof(TDto).GetProperties()
+                    .Where(s => keyNames?.Contains(s.Name) ?? false)
+                    .ToArray();
+                _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
+            }
         }
 
-        // Lazy sync queries (LoadAll/Where) resolve without the scope lock - their
-        // enumeration outlives any lock we could take here.
-        private DbContext ResolveContext()
-        {
-            return AmbientDbContext.Current ?? _dbContextBuilder();
-        }
-
-        /// <inheritdoc />
-        public async Task<TDto> TryInsertOrUpdateAsync(TDto dto)
+        // Runs a write inside a lease. A failure is logged with the keys involved and,
+        // inside a DaoTransactionScope, dooms the scope so it cannot commit the
+        // operations that did succeed around the failed one.
+        private async Task<T> TryRunAsync<T>(Func<DbContext, Task<T>> operation, T failureResult, string operationName, Func<object?> keys)
         {
             try
             {
-                var entity = ToEntity(dto);
                 using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
-                var context = lease.Context;
+                try
+                {
+                    return await operation(lease.Context).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    lease.Fail(e);
+                    throw;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "{Operation}<{Entity}> failed for key(s) {Keys}", operationName, typeof(TEntity).Name, keys());
+                return failureResult;
+            }
+        }
+
+        private object?[] KeyOf(TDto dto)
+        {
+            return _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
+        }
+
+        private static string FormatKeys(IEnumerable<object?[]> keys)
+        {
+            return string.Join(", ", keys.Select(key => key.Length == 1 ? $"{key[0]}" : $"({string.Join(", ", key)})"));
+        }
+
+        // A key made only of CLR defaults (0, Guid.Empty, null) is a "generate one for me"
+        // key: several such rows in one batch are distinct inserts, not duplicates.
+        private static bool IsDefaultKey(IEnumerable<object?> keyValues)
+        {
+            return keyValues.All(value => value == null
+                || (value.GetType().IsValueType && value.Equals(Activator.CreateInstance(value.GetType()))));
+        }
+
+        /// <inheritdoc />
+        public Task<TDto> TryInsertOrUpdateAsync(TDto dto)
+        {
+            return TryRunAsync(async context =>
+            {
+                var entity = ToEntity(dto);
                 var dbset = context.Set<TEntity>();
-                var value = _primaryKey.Select(primaryKey => primaryKey.GetValue(dto, null)).ToArray();
+                var value = KeyOf(dto);
                 var entityfound = await (value.Length > 1 ? dbset.FindAsync(value) : dbset.FindAsync(value.First())).ConfigureAwait(false);
                 if (entityfound != null)
                 {
@@ -100,43 +136,55 @@ namespace NosCore.Dao
 
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return ToDto(entity);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "TryInsertOrUpdateAsync<{Entity}> failed", typeof(TEntity).Name);
-                return default!;
-            }
+            }, default(TDto)!, nameof(TryInsertOrUpdateAsync), () => dto == null ? null : FormatKeys(new[] { KeyOf(dto) }));
         }
 
         /// <inheritdoc />
         public async Task<bool> TryInsertOrUpdateAsync(IEnumerable<TDto> dtos)
         {
+            List<TDto> enumerable;
             try
             {
-                var enumerable = dtos.ToList();
-                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
-                var context = lease.Context;
+                enumerable = dtos.ToList();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "{Operation}<{Entity}> batch failed", nameof(TryInsertOrUpdateAsync), typeof(TEntity).Name);
+                return false;
+            }
 
+            return await TryRunAsync(async context =>
+            {
                 var dbset = context.Set<TEntity>();
-                var entitytoadd = new List<TEntity>();
-
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
-                var list = enumerable.Select(ToEntity);
+                var entities = enumerable.Select(ToEntity).ToList();
                 var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
                 var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => (TPk)_primaryKey.First().GetValue(dto, null)!).ToArray() : null;
-                var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2!, ids!) : dbset.FindAll(dbkey2!, ids2!))
+                var entityfounds = (await (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2!, ids!) : dbset.FindAll(dbkey2!, ids2!))
+                        .ToListAsync().ConfigureAwait(false))
                     .ToDictionary(s => dbkey2.Select(part => part!.GetValue(s, null)).GetTuple(), x => x);
 
-                foreach (var entity in list)
+                var entitytoadd = new List<TEntity>();
+                var pendingByKey = new Dictionary<ITuple, int>();
+                foreach (var entity in entities)
                 {
-                    var key = dbkey2.Select(part => part!.GetValue(entity, null)).GetTuple();
-                    var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
-                    if (entityfound != null)
+                    var keyValues = dbkey2.Select(part => part!.GetValue(entity, null)).ToArray();
+                    var key = keyValues.GetTuple();
+                    if (entityfounds.TryGetValue(key, out var entityfound))
                     {
                         context.Entry(entityfound).CurrentValues.SetValues(entity);
                         continue;
                     }
 
+                    // The same key twice in one batch: last one wins, as it would with two
+                    // successive single upserts, instead of failing the whole batch.
+                    if (!IsDefaultKey(keyValues) && pendingByKey.TryGetValue(key, out var index))
+                    {
+                        entitytoadd[index] = entity;
+                        continue;
+                    }
+
+                    pendingByKey[key] = entitytoadd.Count;
                     entitytoadd.Add(entity);
                 }
 
@@ -145,44 +193,41 @@ namespace NosCore.Dao
                 await context.SaveChangesAsync().ConfigureAwait(false);
 
                 return true;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "TryInsertOrUpdateAsync<{Entity}> batch failed", typeof(TEntity).Name);
-                return false;
-            }
+            }, false, nameof(TryInsertOrUpdateAsync), () => FormatKeys(enumerable.Select(KeyOf))).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         public async Task<IEnumerable<TDto>?> TryDeleteAsync(IEnumerable<TPk> dtokeys)
         {
+            TPk[] keys;
             try
             {
-                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
-                var context = lease.Context;
-                var dbset = context.Set<TEntity>();
-                var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
-                var toDelete = dbset.FindAll(dbkey!, dtokeys.ToArray());
-                var deletedDto = toDelete.ToList().Select(ToDto);
-                dbset.RemoveRange(toDelete);
-                await context.SaveChangesAsync().ConfigureAwait(false);
-                return deletedDto;
+                keys = dtokeys.ToArray();
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "TryDeleteAsync<{Entity}> batch failed", typeof(TEntity).Name);
+                _logger.LogError(e, "{Operation}<{Entity}> batch failed", nameof(TryDeleteAsync), typeof(TEntity).Name);
                 return null;
             }
+
+            return await TryRunAsync<IEnumerable<TDto>?>(async context =>
+            {
+                var dbset = context.Set<TEntity>();
+                var dbkey = _primaryKey.Select(primaryKey => typeof(TEntity).GetProperty(primaryKey.Name)).ToArray();
+                var toDelete = await dbset.FindAll(dbkey!, keys).ToListAsync().ConfigureAwait(false);
+                var deletedDto = toDelete.Select(ToDto).ToList();
+                dbset.RemoveRange(toDelete);
+                await context.SaveChangesAsync().ConfigureAwait(false);
+                return deletedDto;
+            }, null, nameof(TryDeleteAsync), () => string.Join(", ", keys)).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<TDto> TryDeleteAsync(TPk dtokey)
+        public Task<TDto> TryDeleteAsync(TPk dtokey)
         {
-            try
+            return TryRunAsync(async context =>
             {
                 TDto deletedDto = default!;
-                using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
-                var context = lease.Context;
                 var dbset = context.Set<TEntity>();
                 var key = dtokey is ITuple keyArray ? keyArray
                     .GetType()
@@ -199,12 +244,7 @@ namespace NosCore.Dao
 
                 await context.SaveChangesAsync().ConfigureAwait(false);
                 return deletedDto;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "TryDeleteAsync<{Entity}> failed", typeof(TEntity).Name);
-                return default!;
-            }
+            }, default(TDto)!, nameof(TryDeleteAsync), () => dtokey);
         }
 
         /// <inheritdoc />
@@ -219,16 +259,16 @@ namespace NosCore.Dao
         /// <inheritdoc />
         public IEnumerable<TDto> LoadAll()
         {
-            var context = ResolveContext();
-            return context.Set<TEntity>().ToList().Select(ToDto);
+            using var lease = AmbientDbContext.LeaseSync(_dbContextBuilder);
+            return lease.Context.Set<TEntity>().ToList().Select(ToDto).ToList();
         }
 
         /// <inheritdoc />
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
-            var context = ResolveContext();
-            var entities = context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.ToList().Select(ToDto);
+            using var lease = AmbientDbContext.LeaseSync(_dbContextBuilder);
+            var entities = lease.Context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
+            return entities.ToList().Select(ToDto).ToList();
         }
 
         private TDto ToDto(TEntity ent)

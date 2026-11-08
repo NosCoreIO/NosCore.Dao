@@ -1,4 +1,4 @@
-﻿//  __  _  __    __   ___ __  ___ ___
+//  __  _  __    __   ___ __  ___ ___
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
@@ -88,6 +88,11 @@ namespace NosCore.Dao.Extensions
                 }
 
                 return andAlsoExpression;
+            }
+
+            if (list.Count == 0)
+            {
+                return dbSet.Where(_ => false);
             }
 
             var parameter = Expression.Parameter(typeof(T), "e");
