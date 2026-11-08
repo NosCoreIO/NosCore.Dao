@@ -23,6 +23,10 @@ namespace NosCore.Dao
         {
             public DbContext? Context;
             public readonly SemaphoreSlim Lock = new(1, 1);
+
+            // First failure of a DAO operation on the scope. A scope promises all or
+            // nothing, so once one operation failed the scope must not commit the rest.
+            public Exception? Failure;
         }
 
         private static readonly AsyncLocal<Holder?> Slot = new();
@@ -48,6 +52,25 @@ namespace NosCore.Dao
             }
 
             await holder.Lock.WaitAsync().ConfigureAwait(false);
+            return Acquired(holder, fallback);
+        }
+
+        // Synchronous twin for the sync query methods, which materialize their results
+        // before returning and can therefore hold the lease for the whole query.
+        public static Lease LeaseSync(Func<DbContext> fallback)
+        {
+            var holder = Slot.Value;
+            if (holder?.Context == null)
+            {
+                return new Lease(fallback(), null);
+            }
+
+            holder.Lock.Wait();
+            return Acquired(holder, fallback);
+        }
+
+        private static Lease Acquired(Holder holder, Func<DbContext> fallback)
+        {
             var context = holder.Context;
             if (context == null)
             {
@@ -55,16 +78,38 @@ namespace NosCore.Dao
                 return new Lease(fallback(), null);
             }
 
-            return new Lease(context, holder.Lock);
+            return new Lease(context, holder);
         }
 
-        public readonly struct Lease(DbContext context, SemaphoreSlim? scopeLock) : IDisposable
+        // Outside a scope the lease owns a context of its own and disposes it.
+        public readonly struct Lease(DbContext context, Holder? holder) : IDisposable
         {
             public DbContext Context { get; } = context;
 
+            public bool IsScoped => holder != null;
+
+            public void Fail(Exception exception)
+            {
+                if (holder == null)
+                {
+                    return;
+                }
+
+                holder.Failure ??= exception;
+                // Drop the failed changes so the next SaveChanges on the scope does not
+                // silently retry them.
+                Context.ChangeTracker.Clear();
+            }
+
             public void Dispose()
             {
-                scopeLock?.Release();
+                if (holder == null)
+                {
+                    Context.Dispose();
+                    return;
+                }
+
+                holder.Lock.Release();
             }
         }
     }
@@ -94,9 +139,24 @@ namespace NosCore.Dao
 
         private sealed class DaoTransaction(AmbientDbContext.Holder holder, DbContext context, IDbContextTransaction transaction) : IDaoTransaction
         {
-            public Task CommitAsync()
+            public async Task CommitAsync()
             {
-                return transaction.CommitAsync();
+                await holder.Lock.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    if (holder.Failure != null)
+                    {
+                        throw new InvalidOperationException(
+                            "A DAO operation failed inside this DaoTransactionScope; the transaction is rolled back instead of committed.",
+                            holder.Failure);
+                    }
+
+                    await transaction.CommitAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    holder.Lock.Release();
+                }
             }
 
             public async ValueTask DisposeAsync()
