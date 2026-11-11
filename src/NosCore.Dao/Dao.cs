@@ -176,11 +176,11 @@ namespace NosCore.Dao
         }
 
         /// <inheritdoc />
-        public async Task<TDto> TryDeleteAsync(TPk dtokey)
+        public async Task<TDto?> TryDeleteAsync(TPk dtokey)
         {
             try
             {
-                TDto deletedDto = default!;
+                TDto? deletedDto = default;
                 using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
                 var context = lease.Context;
                 var dbset = context.Set<TEntity>();
@@ -203,17 +203,17 @@ namespace NosCore.Dao
             catch (Exception e)
             {
                 _logger.LogError(e, "TryDeleteAsync<{Entity}> failed", typeof(TEntity).Name);
-                return default!;
+                return default;
             }
         }
 
         /// <inheritdoc />
-        public async Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
+        public async Task<TDto?> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate)
         {
             using var lease = await AmbientDbContext.LeaseAsync(_dbContextBuilder).ConfigureAwait(false);
             var context = lease.Context;
             var ent = await context.Set<TEntity>().FirstOrDefaultAsync(predicate.ReplaceParameter<TDto, TEntity>()).ConfigureAwait(false);
-            return ent == null ? default! : ToDto(ent);
+            return ent == null ? default : ToDto(ent);
         }
 
         /// <inheritdoc />
