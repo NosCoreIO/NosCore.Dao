@@ -170,6 +170,7 @@ namespace NosCore.Dao.Tests
             var deleted = await _dao.TryDeleteAsync(7).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.HasCount(2, loadAll);
+            Assert.IsNotNull(deleted);
             Assert.AreEqual(7, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsFalse(deleted is Tph2Dto || deleted is Tph1Dto);
@@ -177,6 +178,7 @@ namespace NosCore.Dao.Tests
             deleted = await _dao.TryDeleteAsync(8).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.HasCount(1, loadAll);
+            Assert.IsNotNull(deleted);
             Assert.AreEqual(8, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsInstanceOfType(deleted, typeof(Tph1Dto));
@@ -185,6 +187,7 @@ namespace NosCore.Dao.Tests
             deleted = await _dao.TryDeleteAsync(9).ConfigureAwait(false);
             loadAll = _dbContextBuilder.CreateContext().Set<TphBaseEntity>().ToList();
             Assert.HasCount(0, loadAll);
+            Assert.IsNotNull(deleted);
             Assert.AreEqual(9, deleted.Key);
             Assert.AreEqual("test", deleted.Value);
             Assert.IsInstanceOfType(deleted, typeof(Tph2Dto));

@@ -131,6 +131,7 @@ namespace NosCore.Dao.Tests
             var deleted = await _dao.TryDeleteAsync(id).ConfigureAwait(false);
             var loadAll = _dbContextBuilder.CreateContext().Set<CompositeEntity>().ToList();
             Assert.HasCount(0, loadAll);
+            Assert.IsNotNull(deleted);
             Assert.AreEqual(8, deleted.Key1);
             Assert.AreEqual(9, deleted.Key2);
             Assert.AreEqual("test", deleted.Value);

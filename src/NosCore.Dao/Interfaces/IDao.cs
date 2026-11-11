@@ -36,7 +36,7 @@ namespace NosCore.Dao.Interfaces
         /// </summary>
         /// <param name="dtokey">The primary key of the entity to delete</param>
         /// <returns>The deleted DTO, or default if not found</returns>
-        Task<TDto> TryDeleteAsync(TPk dtokey);
+        Task<TDto?> TryDeleteAsync(TPk dtokey);
 
         /// <summary>
         /// Attempts to delete multiple entities by their primary keys.
@@ -50,7 +50,7 @@ namespace NosCore.Dao.Interfaces
         /// </summary>
         /// <param name="predicate">The filter expression</param>
         /// <returns>The first matching DTO, or default if not found</returns>
-        Task<TDto> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate);
+        Task<TDto?> FirstOrDefaultAsync(Expression<Func<TDto, bool>> predicate);
 
         /// <summary>
         /// Attempts to insert or update an entity.
