@@ -44,7 +44,7 @@ namespace NosCore.Dao
             var holder = Slot.Value;
             if (holder?.Context == null)
             {
-                return new Lease(fallback(), null);
+                return new Lease(fallback(), null, true);
             }
 
             await holder.Lock.WaitAsync().ConfigureAwait(false);
@@ -52,18 +52,23 @@ namespace NosCore.Dao
             if (context == null)
             {
                 holder.Lock.Release();
-                return new Lease(fallback(), null);
+                return new Lease(fallback(), null, true);
             }
 
-            return new Lease(context, holder.Lock);
+            return new Lease(context, holder.Lock, false);
         }
 
-        public readonly struct Lease(DbContext context, SemaphoreSlim? scopeLock) : IDisposable
+        public readonly struct Lease(DbContext context, SemaphoreSlim? scopeLock, bool ownsContext) : IDisposable
         {
             public DbContext Context { get; } = context;
 
             public void Dispose()
             {
+                if (ownsContext)
+                {
+                    Context.Dispose();
+                }
+
                 scopeLock?.Release();
             }
         }
