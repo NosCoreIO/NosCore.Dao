@@ -1,4 +1,4 @@
-﻿//  __  _  __    __   ___ __  ___ ___
+//  __  _  __    __   ___ __  ___ ___
 // |  \| |/__\ /' _/ / _//__\| _ \ __|
 // | | ' | \/ |`._`.| \_| \/ | v / _|
 // |_|\__|\__/ |___/ \__/\__/|_|_\___|
@@ -61,20 +61,15 @@ namespace NosCore.Dao
             _tphDtoToEntityDictionary = new ReadOnlyDictionary<Type, Type>(_tphEntityToDtoDictionary.ToDictionary(s => s.Value, s => s.Key));
             _logger = logger;
             _dbContextBuilder = dbContextBuilder;
-            var context = ResolveContext();
+            var ambientContext = AmbientDbContext.Current;
+            using var ownedContext = ambientContext == null ? _dbContextBuilder() : null;
+            var model = (ambientContext ?? ownedContext!).Model;
             var key = typeof(TDto).GetProperties()
-                .Where(s => context.Model.FindEntityType(typeof(TEntity))?
+                .Where(s => model.FindEntityType(typeof(TEntity))?
                     .FindPrimaryKey()?.Properties.Select(x => x.Name)
                     .Contains(s.Name) ?? false
                 ).ToArray();
             _primaryKey = key.Any() ? key : throw new KeyNotFoundException();
-        }
-
-        // Lazy sync queries (LoadAll/Where) resolve without the scope lock - their
-        // enumeration outlives any lock we could take here.
-        private DbContext ResolveContext()
-        {
-            return AmbientDbContext.Current ?? _dbContextBuilder();
         }
 
         /// <inheritdoc />
@@ -219,16 +214,25 @@ namespace NosCore.Dao
         /// <inheritdoc />
         public IEnumerable<TDto> LoadAll()
         {
-            var context = ResolveContext();
-            return context.Set<TEntity>().ToList().Select(ToDto);
+            return Materialize(entities => entities).Select(ToDto);
         }
 
         /// <inheritdoc />
         public IEnumerable<TDto> Where(Expression<Func<TDto, bool>> predicate)
         {
-            var context = ResolveContext();
-            var entities = context.Set<TEntity>().Where(predicate.ReplaceParameter<TDto, TEntity>());
-            return entities.ToList().Select(ToDto);
+            return Materialize(entities => entities.Where(predicate.ReplaceParameter<TDto, TEntity>())).Select(ToDto);
+        }
+
+        private List<TEntity> Materialize(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+        {
+            var ambientContext = AmbientDbContext.Current;
+            if (ambientContext != null)
+            {
+                return query(ambientContext.Set<TEntity>()).ToList();
+            }
+
+            using var context = _dbContextBuilder();
+            return query(context.Set<TEntity>()).ToList();
         }
 
         private TDto ToDto(TEntity ent)
