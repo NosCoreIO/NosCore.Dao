@@ -25,13 +25,16 @@ dotnet add package NosCore.Dao
 
 ```csharp
 // Simple key
-var items = new Dao<Item, ItemDto, int>(logger, dbContextBuilder);
+var items = new Dao<Item, ItemDto, int>(
+    loggerFactory.CreateLogger<Dao<Item, ItemDto, int>>(), dbContextBuilder);
 
 // Composite key
-var links = new Dao<CompositeEntity, CompositeDto, (int, int)>(logger, dbContextBuilder);
+var links = new Dao<CompositeEntity, CompositeDto, (int, int)>(
+    loggerFactory.CreateLogger<Dao<CompositeEntity, CompositeDto, (int, int)>>(), dbContextBuilder);
 
 // Table per hierarchy
-var instances = new Dao<TphBaseEntity, ITphBaseDto, int>(logger, dbContextBuilder);
+var instances = new Dao<TphBaseEntity, ITphBaseDto, int>(
+    loggerFactory.CreateLogger<Dao<TphBaseEntity, ITphBaseDto, int>>(), dbContextBuilder);
 
 var item = await items.FirstOrDefaultAsync(i => i.Id == id);
 if (item != null)
