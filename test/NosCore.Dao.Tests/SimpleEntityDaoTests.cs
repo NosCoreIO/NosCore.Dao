@@ -126,6 +126,46 @@ namespace NosCore.Dao.Tests
         }
 
         [TestMethod]
+        public async Task AnInsertGivesTheDtoItsGeneratedKey()
+        {
+            var simpleDto = new SimpleDto { Key = 0, Value = "test" };
+            await _dao.TryInsertOrUpdateAsync(simpleDto).ConfigureAwait(false);
+
+            Assert.AreEqual(_dbContextBuilder.CreateContext().Set<SimpleEntity>().Single().Key, simpleDto.Key);
+        }
+
+        [TestMethod]
+        public async Task ABatchInsertGivesEachDtoItsGeneratedKey()
+        {
+            var simpleDtos = new List<SimpleDto>
+            {
+                new SimpleDto { Key = 0, Value = "first" },
+                new SimpleDto { Key = 0, Value = "second" }
+            };
+
+            Assert.IsTrue(await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false));
+
+            var stored = _dbContextBuilder.CreateContext().Set<SimpleEntity>().ToDictionary(s => s.Value!, s => s.Key);
+            Assert.AreEqual(stored["first"], simpleDtos[0].Key);
+            Assert.AreEqual(stored["second"], simpleDtos[1].Key);
+        }
+
+        [TestMethod]
+        public async Task ABatchUpsertedAgainUpdatesTheRowsItInserted()
+        {
+            var simpleDtos = new List<SimpleDto> { new SimpleDto { Key = 0, Value = "first" } };
+            Assert.IsTrue(await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false));
+            var key = simpleDtos[0].Key;
+
+            simpleDtos[0].Value = "changed";
+            Assert.IsTrue(await _dao.TryInsertOrUpdateAsync(simpleDtos).ConfigureAwait(false));
+
+            var stored = _dbContextBuilder.CreateContext().Set<SimpleEntity>().Single();
+            Assert.AreEqual(key, stored.Key);
+            Assert.AreEqual("changed", stored.Value);
+        }
+
+        [TestMethod]
         public async Task CanDelete()
         {
             var otherContext = _dbContextBuilder.CreateContext();

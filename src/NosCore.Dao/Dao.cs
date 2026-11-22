@@ -88,12 +88,18 @@ namespace NosCore.Dao
                     context.Entry(entityfound).CurrentValues.SetValues(entity);
                 }
 
-                if ((value.Any(val => val == null)) || (entityfound == null))
+                var added = value.Any(val => val == null) || entityfound == null;
+                if (added)
                 {
                     dbset.Add(entity ?? throw new InvalidOperationException());
                 }
 
                 await context.SaveChangesAsync().ConfigureAwait(false);
+                if (added)
+                {
+                    WriteBackKey(entity, dto);
+                }
+
                 return ToDto(entity);
             }
             catch (Exception e)
@@ -113,31 +119,36 @@ namespace NosCore.Dao
                 var context = lease.Context;
 
                 var dbset = context.Set<TEntity>();
-                var entitytoadd = new List<TEntity>();
+                var entitytoadd = new List<(TDto Dto, TEntity Entity)>();
 
                 var dbkey2 = _primaryKey.Select(key => typeof(TEntity).GetProperty(key.Name)).ToArray();
-                var list = enumerable.Select(ToEntity);
+                var list = enumerable.Select(dto => (Dto: dto, Entity: ToEntity(dto)));
                 var ids = _primaryKey.Length > 1 ? enumerable.Select(dto => _primaryKey.Select(part => part.GetValue(dto, null))).ToArray() : null;
                 var ids2 = _primaryKey.Length == 1 ? enumerable.Select(dto => (TPk)_primaryKey.First().GetValue(dto, null)!).ToArray() : null;
                 var entityfounds = (_primaryKey.Length > 1 ? dbset.FindAll(dbkey2!, ids!) : dbset.FindAll(dbkey2!, ids2!))
                     .ToDictionary(s => dbkey2.Select(part => part!.GetValue(s, null)).GetTuple(), x => x);
 
-                foreach (var entity in list)
+                foreach (var pair in list)
                 {
-                    var key = dbkey2.Select(part => part!.GetValue(entity, null)).GetTuple();
+                    var key = dbkey2.Select(part => part!.GetValue(pair.Entity, null)).GetTuple();
                     var entityfound = entityfounds.ContainsKey(key) ? entityfounds[key] : null;
                     if (entityfound != null)
                     {
-                        context.Entry(entityfound).CurrentValues.SetValues(entity);
+                        context.Entry(entityfound).CurrentValues.SetValues(pair.Entity);
                         continue;
                     }
 
-                    entitytoadd.Add(entity);
+                    entitytoadd.Add(pair);
                 }
 
-                dbset.AddRange(entitytoadd);
+                dbset.AddRange(entitytoadd.Select(pair => pair.Entity));
 
                 await context.SaveChangesAsync().ConfigureAwait(false);
+
+                foreach (var (dto, entity) in entitytoadd)
+                {
+                    WriteBackKey(entity, dto);
+                }
 
                 return true;
             }
@@ -233,6 +244,15 @@ namespace NosCore.Dao
 
             using var context = _dbContextBuilder();
             return query(context.Set<TEntity>()).ToList();
+        }
+
+        // A row the database keyed on insert is otherwise written again as a new row by the next upsert of the same DTO.
+        private void WriteBackKey(TEntity entity, TDto dto)
+        {
+            foreach (var key in _primaryKey.Where(key => key.CanWrite))
+            {
+                key.SetValue(dto, entity.GetType().GetProperty(key.Name)!.GetValue(entity));
+            }
         }
 
         private TDto ToDto(TEntity ent)
