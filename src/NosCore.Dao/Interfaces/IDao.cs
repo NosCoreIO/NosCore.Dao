@@ -55,14 +55,14 @@ namespace NosCore.Dao.Interfaces
         /// <summary>
         /// Attempts to insert or update an entity.
         /// </summary>
-        /// <param name="dto">The DTO to insert or update</param>
+        /// <param name="dto">The DTO to insert or update; on insert it receives the key the row was given</param>
         /// <returns>The inserted or updated DTO</returns>
         Task<TDto> TryInsertOrUpdateAsync(TDto dto);
 
         /// <summary>
         /// Attempts to insert or update multiple entities.
         /// </summary>
-        /// <param name="dtos">The collection of DTOs to insert or update</param>
+        /// <param name="dtos">The collection of DTOs to insert or update; each one inserted receives the key its row was given</param>
         /// <returns>True if successful, false otherwise</returns>
         Task<bool> TryInsertOrUpdateAsync(IEnumerable<TDto> dtos);
 
